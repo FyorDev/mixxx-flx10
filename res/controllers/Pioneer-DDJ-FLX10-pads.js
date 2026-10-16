@@ -816,3 +816,91 @@ PioneerDDJFLX10Pads.shutdown = function() {
         }
     });
 };
+
+// Memory cues (CUE/LOOP CALL) use hot cues 17-36; pads use 1-16.
+PioneerDDJFLX10Pads.memoryFirst = 17;
+PioneerDDJFLX10Pads.memoryLast = 36;
+PioneerDDJFLX10Pads.memoryColor = 0xE8201E;
+
+PioneerDDJFLX10Pads.samplesPerSecond = (group) => (engine.getValue(group, "track_samplerate") || 44100) * 2;
+
+PioneerDDJFLX10Pads.playSamples = (group) =>
+    engine.getValue(group, "playposition") * engine.getValue(group, "track_samples");
+
+PioneerDDJFLX10Pads.seekSamples = function(group, samples) {
+    const total = engine.getValue(group, "track_samples");
+    if (total > 0) {
+        engine.setValue(group, "playposition", PioneerDDJFLX10Pads.clamp(samples / total, 0, 1));
+    }
+};
+
+PioneerDDJFLX10Pads.cueCall = function(direction) {
+    return function(_channel, _control, value, _status, group) {
+        if (!value || !engine.getValue(group, "track_loaded")) {
+            return;
+        }
+        const here = PioneerDDJFLX10Pads.playSamples(group);
+        const margin = PioneerDDJFLX10Pads.samplesPerSecond(group) * 0.05;
+        const points = [engine.getValue(group, "cue_point")];
+        for (let i = 1; i <= PioneerDDJFLX10Pads.memoryLast; i++) {
+            points.push(engine.getValue(group, `hotcue_${i}_position`));
+        }
+        const candidates = points.filter((p) => p >= 0 && (direction < 0 ? p < here - margin : p > here + margin));
+        if (!candidates.length) {
+            return;
+        }
+        const target = direction < 0 ? Math.max.apply(null, candidates) : Math.min.apply(null, candidates);
+        PioneerDDJFLX10Pads.seekSamples(group, target);
+        if (!engine.getValue(group, "play")) {
+            // A called cue becomes the CUE point, as on a CDJ. This replaces
+            // the track's stored cue point (noted in the manual).
+            engine.setValue(group, "cue_set", 1);
+        }
+    };
+};
+
+PioneerDDJFLX10Pads.cueCallBack = PioneerDDJFLX10Pads.cueCall(-1);
+PioneerDDJFLX10Pads.cueCallForward = PioneerDDJFLX10Pads.cueCall(1);
+
+// MEMORY: store the current position (or the running loop) as a memory cue.
+PioneerDDJFLX10Pads.memory = function(_channel, _control, value, _status, group) {
+    if (!value || !engine.getValue(group, "track_loaded")) {
+        return;
+    }
+    const here = PioneerDDJFLX10Pads.playSamples(group);
+    const margin = PioneerDDJFLX10Pads.samplesPerSecond(group) * 0.05;
+    let free = 0;
+    for (let i = PioneerDDJFLX10Pads.memoryFirst; i <= PioneerDDJFLX10Pads.memoryLast; i++) {
+        const position = engine.getValue(group, `hotcue_${i}_position`);
+        if (position >= 0 && Math.abs(position - here) < margin) {
+            return;
+        }
+        if (position < 0 && !free) {
+            free = i;
+        }
+    }
+    if (free) {
+        engine.setValue(group, `hotcue_${free}_set`, 1);
+        engine.setValue(group, `hotcue_${free}_color`, PioneerDDJFLX10Pads.memoryColor);
+    }
+};
+
+// SHIFT + MEMORY: delete the memory cue nearest the current position (within 1 s).
+PioneerDDJFLX10Pads.memoryDelete = function(_channel, _control, value, _status, group) {
+    if (!value || !engine.getValue(group, "track_loaded")) {
+        return;
+    }
+    const here = PioneerDDJFLX10Pads.playSamples(group);
+    let nearest = 0;
+    let distance = PioneerDDJFLX10Pads.samplesPerSecond(group);
+    for (let i = PioneerDDJFLX10Pads.memoryFirst; i <= PioneerDDJFLX10Pads.memoryLast; i++) {
+        const position = engine.getValue(group, `hotcue_${i}_position`);
+        if (position >= 0 && Math.abs(position - here) <= distance) {
+            nearest = i;
+            distance = Math.abs(position - here);
+        }
+    }
+    if (nearest) {
+        engine.setValue(group, `hotcue_${nearest}_clear`, 1);
+    }
+};
