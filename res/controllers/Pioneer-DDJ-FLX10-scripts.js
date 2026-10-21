@@ -252,6 +252,7 @@ PioneerDDJFLX10.init = function(id) {
 
     // Performance pads (all modes, both pages, colours): Pioneer-DDJ-FLX10-pads.js
     PioneerDDJFLX10Pads.init();
+    PioneerDDJFLX10MixPoint.init();
 
     // Loop in/out button LEDs (blink while setting/adjusting, solid when active)
     PioneerDDJFLX10._initLoopLeds();
@@ -397,6 +398,7 @@ PioneerDDJFLX10.keySyncToggle = function(channel, control, value, status, group)
 PioneerDDJFLX10.shutdown = function() {
     console.log("Pioneer DDJ-FLX10 PROD - Arrêt");
     PioneerDDJFLX10Pads.shutdown();
+    PioneerDDJFLX10MixPoint.shutdown();
     if (typeof PioneerDDJFLX10.screen !== "undefined") {
         PioneerDDJFLX10.screen.stop();
     }
@@ -1803,7 +1805,8 @@ PioneerDDJFLX10._loadStemColorFx = function(deck, preset) {
 // Returns true when the knob was applied to stem parts instead of the deck.
 PioneerDDJFLX10._colorFxOnParts = function(deck, position) {
     var selected = PioneerDDJFLX10._selectedStems();
-    if (!selected.length || !PioneerDDJFLX10._hasStems(deck)) {
+    // All three parts lit means the whole track, as with none lit.
+    if (!selected.length || selected.length >= 4 || !PioneerDDJFLX10._hasStems(deck)) {
         return false;
     }
     engine.setValue("[QuickEffectRack1_[Channel" + deck + "]]", "super1", 0.5);

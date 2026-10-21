@@ -8,10 +8,21 @@
             <product protocol="midi" vendor_id="0x2b73" product_id="0x0041"/>
         </devices>
     </info>
+    <settings>
+        <option variable="mixPointLinkButton" type="enum" label="MIX POINT LINK button">
+            <description>
+                Mix Point Link as in rekordbox, or Key Lock (master tempo) as in Serato.
+                The FLX10 has no other key lock button.
+            </description>
+            <value label="Mix Point Link (rekordbox)" default="true">mixpoint</value>
+            <value label="Key Lock (Serato)">keylock</value>
+        </option>
+    </settings>
     <controller id="DDJ-FLX10">
         <scriptfiles>
             <file filename="Pioneer-DDJ-FLX10-scripts.js" functionprefix="PioneerDDJFLX10"/>
             <file filename="Pioneer-DDJ-FLX10-pads.js" functionprefix=""/>
+            <file filename="Pioneer-DDJ-FLX10-mixpoint.js" functionprefix=""/>
         </scriptfiles>
         <controls>
             <control>
@@ -749,46 +760,6 @@
                 <midino>0x1A</midino>
                 <options>
                     <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>keylock</key>
-                <description>Keylock CH1</description>
-                <status>0x90</status>
-                <midino>0x4A</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>keylock</key>
-                <description>Keylock CH2</description>
-                <status>0x91</status>
-                <midino>0x4A</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>keylock</key>
-                <description>Keylock CH3</description>
-                <status>0x92</status>
-                <midino>0x4A</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>keylock</key>
-                <description>Keylock CH4</description>
-                <status>0x93</status>
-                <midino>0x4A</midino>
-                <options>
-                    <normal/>
                 </options>
             </control>
             <control>
@@ -15187,6 +15158,246 @@
                     <script-binding/>
                 </options>
             </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10MixPoint.link</key>
+                <description>MIX POINT LINK CH1 (or Key Lock, see settings)</description>
+                <status>0x90</status>
+                <midino>0x4A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10MixPoint.silent</key>
+                <description>SHIFT + MIX POINT LINK CH1: Silent</description>
+                <status>0x90</status>
+                <midino>0x43</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10MixPoint.selectBack</key>
+                <description>MIX POINT SELECT &lt; CH1</description>
+                <status>0x90</status>
+                <midino>0x59</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10MixPoint.selectForward</key>
+                <description>MIX POINT SELECT &gt; CH1</description>
+                <status>0x90</status>
+                <midino>0x5A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10MixPoint.cancelButton</key>
+                <description>SHIFT + MIX POINT SELECT &lt; CH1: cancel</description>
+                <status>0x90</status>
+                <midino>0x49</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10MixPoint.nextTarget</key>
+                <description>SHIFT + MIX POINT SELECT &gt; CH1: deck to mix from</description>
+                <status>0x90</status>
+                <midino>0x42</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10MixPoint.link</key>
+                <description>MIX POINT LINK CH2 (or Key Lock, see settings)</description>
+                <status>0x91</status>
+                <midino>0x4A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10MixPoint.silent</key>
+                <description>SHIFT + MIX POINT LINK CH2: Silent</description>
+                <status>0x91</status>
+                <midino>0x43</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10MixPoint.selectBack</key>
+                <description>MIX POINT SELECT &lt; CH2</description>
+                <status>0x91</status>
+                <midino>0x59</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10MixPoint.selectForward</key>
+                <description>MIX POINT SELECT &gt; CH2</description>
+                <status>0x91</status>
+                <midino>0x5A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10MixPoint.cancelButton</key>
+                <description>SHIFT + MIX POINT SELECT &lt; CH2: cancel</description>
+                <status>0x91</status>
+                <midino>0x49</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10MixPoint.nextTarget</key>
+                <description>SHIFT + MIX POINT SELECT &gt; CH2: deck to mix from</description>
+                <status>0x91</status>
+                <midino>0x42</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10MixPoint.link</key>
+                <description>MIX POINT LINK CH3 (or Key Lock, see settings)</description>
+                <status>0x92</status>
+                <midino>0x4A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10MixPoint.silent</key>
+                <description>SHIFT + MIX POINT LINK CH3: Silent</description>
+                <status>0x92</status>
+                <midino>0x43</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10MixPoint.selectBack</key>
+                <description>MIX POINT SELECT &lt; CH3</description>
+                <status>0x92</status>
+                <midino>0x59</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10MixPoint.selectForward</key>
+                <description>MIX POINT SELECT &gt; CH3</description>
+                <status>0x92</status>
+                <midino>0x5A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10MixPoint.cancelButton</key>
+                <description>SHIFT + MIX POINT SELECT &lt; CH3: cancel</description>
+                <status>0x92</status>
+                <midino>0x49</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10MixPoint.nextTarget</key>
+                <description>SHIFT + MIX POINT SELECT &gt; CH3: deck to mix from</description>
+                <status>0x92</status>
+                <midino>0x42</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10MixPoint.link</key>
+                <description>MIX POINT LINK CH4 (or Key Lock, see settings)</description>
+                <status>0x93</status>
+                <midino>0x4A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10MixPoint.silent</key>
+                <description>SHIFT + MIX POINT LINK CH4: Silent</description>
+                <status>0x93</status>
+                <midino>0x43</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10MixPoint.selectBack</key>
+                <description>MIX POINT SELECT &lt; CH4</description>
+                <status>0x93</status>
+                <midino>0x59</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10MixPoint.selectForward</key>
+                <description>MIX POINT SELECT &gt; CH4</description>
+                <status>0x93</status>
+                <midino>0x5A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10MixPoint.cancelButton</key>
+                <description>SHIFT + MIX POINT SELECT &lt; CH4: cancel</description>
+                <status>0x93</status>
+                <midino>0x49</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10MixPoint.nextTarget</key>
+                <description>SHIFT + MIX POINT SELECT &gt; CH4: deck to mix from</description>
+                <status>0x93</status>
+                <midino>0x42</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
         </controls>
         <outputs>
             <output>
@@ -15195,14 +15406,6 @@
                 <description>Cue CH1 (Pioneer style)</description>
                 <status>0x90</status>
                 <midino>0x0C</midino>
-            </output>
-            <output>
-                <group>[Channel1]</group>
-                <key>keylock</key>
-                <description>Keylock Feedback CH1</description>
-                <status>0x90</status>
-                <midino>0x4A</midino>
-                <minimum>0.5</minimum>
             </output>
             <output>
                 <group>[Channel1]</group>
@@ -15281,14 +15484,6 @@
             </output>
             <output>
                 <group>[Channel2]</group>
-                <key>keylock</key>
-                <description>Keylock Feedback CH2</description>
-                <status>0x91</status>
-                <midino>0x4A</midino>
-                <minimum>0.5</minimum>
-            </output>
-            <output>
-                <group>[Channel2]</group>
                 <key>pfl</key>
                 <description>PFL LED CH2</description>
                 <status>0x91</status>
@@ -15328,14 +15523,6 @@
             </output>
             <output>
                 <group>[Channel3]</group>
-                <key>keylock</key>
-                <description>Keylock Feedback CH3</description>
-                <status>0x92</status>
-                <midino>0x4A</midino>
-                <minimum>0.5</minimum>
-            </output>
-            <output>
-                <group>[Channel3]</group>
                 <key>pfl</key>
                 <description>PFL LED CH3</description>
                 <status>0x92</status>
@@ -15372,14 +15559,6 @@
                 <description>Cue CH4 (Pioneer style)</description>
                 <status>0x93</status>
                 <midino>0x0C</midino>
-            </output>
-            <output>
-                <group>[Channel4]</group>
-                <key>keylock</key>
-                <description>Keylock Feedback CH4</description>
-                <status>0x93</status>
-                <midino>0x4A</midino>
-                <minimum>0.5</minimum>
             </output>
             <output>
                 <group>[Channel4]</group>
