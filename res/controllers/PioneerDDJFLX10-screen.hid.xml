@@ -5,6 +5,19 @@
         <author>Victor Pineda (Veezuhz)</author>
         <description>Jog wheel HID screen module for DDJ-FLX10. Enable alongside the main MIDI mapping.</description>
     </info>
+    <settings>
+        <option variable="jogScreenMode" type="enum" label="Jog screen protocol">
+            <description>
+                Must match "Jog screen mode" in the DDJ-FLX10 MIDI mapping. Serato:
+                waveform, artwork and time (tested by Veezuhz). rekordbox: the
+                rekordbox waveform packets decoded by Loui1979 (not yet verified on
+                hardware). MIDI: this HID mapping stays idle.
+            </description>
+            <value label="Serato" default="true">serato</value>
+            <value label="rekordbox (experimental)">rekordbox</value>
+            <value label="Off (MIDI text only)">midi</value>
+        </option>
+    </settings>
     <controller id="DDJ-FLX10 Screen">
         <devices>
             <product protocol="hid" vendor_id="0x2B73" product_id="0x0041" />

@@ -1130,14 +1130,24 @@ PioneerDDJFLX10Screen._sendXX3DHeartbeat = function() {
     this._send(p);
 };
 
+PioneerDDJFLX10Screen._rbTick = 0;
 PioneerDDJFLX10Screen._sendRekordboxState = function() {
-    // 1 heartbeat per tick + 1 xx 21 per loaded deck
+    // rekordbox sends the 0x3D heartbeat continuously and 0x21 per deck at
+    // about 50 Hz; the state timer runs at 200 Hz.
     this._sendXX3DHeartbeat();
-    for (var d = 1; d <= 4; d++) {
-        var duration = engine.getValue("[Channel" + d + "]", "duration");
-        this._lastDuration[d] = duration;
-        var loaded = (duration > 0);
-        this._send(this._buildXX21(d, loaded));
+    this._rbTick = (this._rbTick + 1) % 4;
+    var sent = 1;
+    if (this._rbTick === 0) {
+        for (var d = 1; d <= 4; d++) {
+            var duration = engine.getValue("[Channel" + d + "]", "duration");
+            this._lastDuration[d] = duration;
+            controller.send(this._buildXX21(d, duration > 0), 0, 0, true);
+            sent++;
+        }
+    }
+    while (sent < this._TICK_BUDGET && this._txQueue.length > 0) {
+        controller.send(this._txQueue.shift(), 0, 0, true);
+        sent++;
     }
 };
 
@@ -2083,6 +2093,18 @@ PioneerDDJFLX10Screen._onTrackLoad = function(deck) {
     // far longer than 6 s). Replaced on the next track load; ~3 min safety cap.
     this._wfPollTimer[deck] = engine.beginTimer(150, function() {
         tries++;
+        if (self._SCREEN_MODE === "rekordbox") {
+            if (self._rbUpload(deck, duration)) {
+                engine.stopTimer(self._wfPollTimer[deck]);
+                self._wfPollTimer[deck] = 0;
+                markReady();
+            } else if (tries >= 1200) {
+                engine.stopTimer(self._wfPollTimer[deck]);
+                self._wfPollTimer[deck] = 0;
+                markReady();
+            }
+            return;
+        }
         var entries = self._generateEntries(deck, duration);
         if (entries && entries.length) {
             engine.stopTimer(self._wfPollTimer[deck]);
@@ -2113,6 +2135,15 @@ PioneerDDJFLX10Screen.init = function(id) {
     PioneerDDJFLX10Screen._hasPlayerProxy = (typeof engine.getPlayer === "function");
     if (this._hasPlayerProxy) {
         console.log("FLX10 screen: engine.getPlayer available (Mixxx 2.7-alpha+)");
+    }
+
+    var setting = engine.getSetting("jogScreenMode");
+    if (setting === "midi") {
+        console.log("FLX10 screen: jog screen mode is MIDI, HID screen idle");
+        return;
+    }
+    if (setting === "serato" || setting === "rekordbox" || setting === "vdj") {
+        this._SCREEN_MODE = setting;
     }
 
     // State timer — dispatch based on _SCREEN_MODE.
@@ -2208,4 +2239,73 @@ PioneerDDJFLX10Screen.incomingData = function(data, length) {
         }
         console.log("FLX10_HID_IN len=" + length + " bytes=" + hex);
     } catch (e) {}
+};
+
+// ===== rekordbox waveform upload (0x37 overview + 0x38 waveform) ==========
+// Decoded by Loui1979 from rekordbox captures (captures/
+// FINDINGS_rekordbox_jogscreen.md and HID/flx10_rb_waveform.py in
+// github.com/Loui1979/MIXXX-FLX10). Header [deck][type][seq LE16][total LE16],
+// 122 payload bytes per packet forming one continuous stream of 3-byte
+// columns. Both bursts are sent once at track load; the firmware scrolls the
+// waveform itself from the 0x21 playhead.
+PioneerDDJFLX10Screen._RB_FULL_FPS = 150;
+PioneerDDJFLX10Screen._RB_OVERVIEW_DECIM = 21;
+// The firmware's waveform buffer holds about 163 s at 150 columns/s.
+PioneerDDJFLX10Screen._RB_FW_WAVE_BUFFER = 24500;
+// Lane order in each column. Inferred from the capture's statistics, not
+// from audio ground truth; permute if the colours look wrong on hardware.
+PioneerDDJFLX10Screen._RB_BAND_ORDER = ["high", "low", "mid"];
+PioneerDDJFLX10Screen._RB_OVERVIEW_SUBHEADER = [0x80, 0x01, 0x01, 0x00];
+
+PioneerDDJFLX10Screen._rbColumns = function(deck, nColumns) {
+    var wf = engine.getWaveformSummary("[Channel" + deck + "]", nColumns);
+    if (!wf || !wf.length) {
+        return null;
+    }
+    var bandIndex = {all: 0, low: 1, mid: 2, high: 3};
+    var order = this._RB_BAND_ORDER.map(function(b) { return bandIndex[b]; });
+    var bins = Math.floor(wf.length / 4);
+    var out = new Array(bins * 3);
+    for (var i = 0; i < bins; i++) {
+        for (var lane = 0; lane < 3; lane++) {
+            out[i * 3 + lane] = Math.max(0, Math.min(255, wf[i * 4 + order[lane]] | 0));
+        }
+    }
+    return out;
+};
+
+PioneerDDJFLX10Screen._rbPacketise = function(deck, type, stream) {
+    var payload = 122;
+    var total = Math.max(1, Math.ceil(stream.length / payload));
+    for (var i = 0; i < total; i++) {
+        var p = this._zeros();
+        p[0] = this._DECK_BYTE_XX21[deck - 1];
+        p[1] = type;
+        p[2] = (i + 1) & 0xFF;
+        p[3] = ((i + 1) >> 8) & 0xFF;
+        p[4] = total & 0xFF;
+        p[5] = (total >> 8) & 0xFF;
+        for (var j = 0; j < payload && i * payload + j < stream.length; j++) {
+            p[6 + j] = stream[i * payload + j];
+        }
+        this._sendRaw(p);
+    }
+};
+
+PioneerDDJFLX10Screen._rbUpload = function(deck, durationSec) {
+    var nFull = Math.max(1, Math.min(this._RB_FW_WAVE_BUFFER,
+        Math.round(durationSec * this._RB_FULL_FPS)));
+    var full = this._rbColumns(deck, nFull);
+    if (!full) {
+        return false;
+    }
+    var overview = this._rbColumns(deck,
+        Math.max(1, Math.floor(nFull / this._RB_OVERVIEW_DECIM)));
+    this._sendInit30(deck, durationSec);
+    this._sendXX39(deck);
+    this._rbPacketise(deck, 0x37, this._RB_OVERVIEW_SUBHEADER.concat(overview || []));
+    this._rbPacketise(deck, 0x38, full);
+    console.log("FLX10 screen: rekordbox waveform queued deck " + deck +
+                " (" + (full.length / 3) + " columns)");
+    return true;
 };
