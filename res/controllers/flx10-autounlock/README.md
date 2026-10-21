@@ -71,3 +71,25 @@ plug in FLX10 ──> udev matches VID 2b73/PID 0041 (99-flx10-unlock.rules)
               ──> python3 /usr/local/bin/flx10_unlock_minimal.py  (as root)
               ──> 7 vendor control transfers ──> screen unlocked
 ```
+
+## Settings and DJ logo (`flx10_setup.py`)
+
+The seven unlock transfers are the DDJ-FLX10 Setup utility's settings
+writes (protocol from Gino Messmer's macOS FLX10 Utility,
+github.com/ginomessmer/ddj-flx10-util). `flx10_setup.py settings` sends them
+with your own values instead of fixed ones; the defaults are what rekordbox
+sends, so it also works as the unlock:
+
+| Option | wIndex | Values (default first as sent by rekordbox) |
+|------|------|------|
+| `--slip-flashing` | C028 | on, off |
+| `--slip-led` | C029 | light, blink |
+| `--fader-start` | C013 | off, on |
+| `--jog-ring-color` | C02B | 1, 2, 3 |
+| `--time-mode` | C026 | remaining, elapsed |
+| `--rec-out` | C01D | with-mic, without-mic |
+| `--virtual-deck` | C027 | on, off |
+
+`flx10_setup.py logo image.jpg` stores a 240x240 JPEG as the jog screen DJ
+logo (shown in DJ LOGO display mode); `flx10_setup.py logo --delete`
+removes it. This uses the hidraw node, not pyusb.
