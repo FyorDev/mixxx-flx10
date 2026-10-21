@@ -1076,11 +1076,10 @@ void readAnalyze(TrackPointer track,
 
         bool mainCueFound = false;
 
-        // rekordbox hot cues A-H use Mixxx hotcues 1-8. Always put memory cues
-        // and loops from hotcue 9 on, so they line up with the
-        // "Show rekordbox memory cues markers" waveform option and with
-        // controller mappings that treat hotcues 9+ as memory cues.
-        constexpr int kLastRekordboxHotCueIndex = 7; // 0-based, hot cue H
+        // rekordbox has 16 hot cues (A-P), which use Mixxx hotcues 1-16.
+        // Memory cues and loops always start at hotcue 17, so they never take
+        // a hot cue slot and stay apart from the pads, as on Pioneer gear.
+        constexpr int kLastRekordboxHotCueIndex = 15; // 0-based, hot cue P
         if (lastHotCueIndex < kLastRekordboxHotCueIndex) {
             lastHotCueIndex = kLastRekordboxHotCueIndex;
         }
