@@ -1263,7 +1263,7 @@
                 <status>0xB0</status>
                 <midino>0x13</midino>
                 <options>
-                    <normal/>
+                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -1273,7 +1273,7 @@
                 <status>0xB1</status>
                 <midino>0x13</midino>
                 <options>
-                    <normal/>
+                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -1283,7 +1283,7 @@
                 <status>0xB2</status>
                 <midino>0x13</midino>
                 <options>
-                    <normal/>
+                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -1293,7 +1293,7 @@
                 <status>0xB3</status>
                 <midino>0x13</midino>
                 <options>
-                    <normal/>
+                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -4699,6 +4699,346 @@
                 <description>Sound Color FX: Filter deselect (note-off)</description>
                 <status>0x86</status>
                 <midino>0x05</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>start_stop</key>
+                <description>SHIFT + CUE CH1: jump to track start and stop</description>
+                <status>0x90</status>
+                <midino>0x48</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10.wheelTouch</key>
+                <description>SHIFT + Jog touch CH1</description>
+                <status>0x90</status>
+                <midino>0x67</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10.syncLeaderToggle</key>
+                <description>BEAT SYNC long press CH1: toggle sync leader</description>
+                <status>0x90</status>
+                <midino>0x78</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>reverse</key>
+                <description>SHIFT + SLIP REVERSE CH1: reverse play</description>
+                <status>0x90</status>
+                <midino>0x38</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10.wheelTurn</key>
+                <description>Jog platter turn, vinyl mode off CH1</description>
+                <status>0xB0</status>
+                <midino>0x23</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10.jogBeatJump</key>
+                <description>Jog turn with BEAT JUMP held CH1</description>
+                <status>0xB0</status>
+                <midino>0x29</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10.rate_msb</key>
+                <description>SHIFT + Tempo fader MSB CH1 (14-bit)</description>
+                <status>0xB0</status>
+                <midino>0x05</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10.rate_lsb</key>
+                <description>SHIFT + Tempo fader LSB CH1 (14-bit)</description>
+                <status>0xB0</status>
+                <midino>0x25</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>start_stop</key>
+                <description>SHIFT + CUE CH2: jump to track start and stop</description>
+                <status>0x91</status>
+                <midino>0x48</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10.wheelTouch</key>
+                <description>SHIFT + Jog touch CH2</description>
+                <status>0x91</status>
+                <midino>0x67</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10.syncLeaderToggle</key>
+                <description>BEAT SYNC long press CH2: toggle sync leader</description>
+                <status>0x91</status>
+                <midino>0x78</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>reverse</key>
+                <description>SHIFT + SLIP REVERSE CH2: reverse play</description>
+                <status>0x91</status>
+                <midino>0x38</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10.wheelTurn</key>
+                <description>Jog platter turn, vinyl mode off CH2</description>
+                <status>0xB1</status>
+                <midino>0x23</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10.jogBeatJump</key>
+                <description>Jog turn with BEAT JUMP held CH2</description>
+                <status>0xB1</status>
+                <midino>0x29</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10.rate_msb</key>
+                <description>SHIFT + Tempo fader MSB CH2 (14-bit)</description>
+                <status>0xB1</status>
+                <midino>0x05</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10.rate_lsb</key>
+                <description>SHIFT + Tempo fader LSB CH2 (14-bit)</description>
+                <status>0xB1</status>
+                <midino>0x25</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>volume</key>
+                <description>Channel fader LSB CH3 (14-bit)</description>
+                <status>0xB2</status>
+                <midino>0x33</midino>
+                <options>
+                    <fourteen-bit-lsb/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>start_stop</key>
+                <description>SHIFT + CUE CH3: jump to track start and stop</description>
+                <status>0x92</status>
+                <midino>0x48</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10.wheelTouch</key>
+                <description>SHIFT + Jog touch CH3</description>
+                <status>0x92</status>
+                <midino>0x67</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10.syncLeaderToggle</key>
+                <description>BEAT SYNC long press CH3: toggle sync leader</description>
+                <status>0x92</status>
+                <midino>0x78</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>reverse</key>
+                <description>SHIFT + SLIP REVERSE CH3: reverse play</description>
+                <status>0x92</status>
+                <midino>0x38</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10.wheelTurn</key>
+                <description>Jog platter turn, vinyl mode off CH3</description>
+                <status>0xB2</status>
+                <midino>0x23</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10.jogBeatJump</key>
+                <description>Jog turn with BEAT JUMP held CH3</description>
+                <status>0xB2</status>
+                <midino>0x29</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10.rate_msb</key>
+                <description>SHIFT + Tempo fader MSB CH3 (14-bit)</description>
+                <status>0xB2</status>
+                <midino>0x05</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10.rate_lsb</key>
+                <description>SHIFT + Tempo fader LSB CH3 (14-bit)</description>
+                <status>0xB2</status>
+                <midino>0x25</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>volume</key>
+                <description>Channel fader LSB CH4 (14-bit)</description>
+                <status>0xB3</status>
+                <midino>0x33</midino>
+                <options>
+                    <fourteen-bit-lsb/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>start_stop</key>
+                <description>SHIFT + CUE CH4: jump to track start and stop</description>
+                <status>0x93</status>
+                <midino>0x48</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10.wheelTouch</key>
+                <description>SHIFT + Jog touch CH4</description>
+                <status>0x93</status>
+                <midino>0x67</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10.syncLeaderToggle</key>
+                <description>BEAT SYNC long press CH4: toggle sync leader</description>
+                <status>0x93</status>
+                <midino>0x78</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>reverse</key>
+                <description>SHIFT + SLIP REVERSE CH4: reverse play</description>
+                <status>0x93</status>
+                <midino>0x38</midino>
+                <options>
+                    <normal/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10.wheelTurn</key>
+                <description>Jog platter turn, vinyl mode off CH4</description>
+                <status>0xB3</status>
+                <midino>0x23</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10.jogBeatJump</key>
+                <description>Jog turn with BEAT JUMP held CH4</description>
+                <status>0xB3</status>
+                <midino>0x29</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10.rate_msb</key>
+                <description>SHIFT + Tempo fader MSB CH4 (14-bit)</description>
+                <status>0xB3</status>
+                <midino>0x05</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10.rate_lsb</key>
+                <description>SHIFT + Tempo fader LSB CH4 (14-bit)</description>
+                <status>0xB3</status>
+                <midino>0x25</midino>
                 <options>
                     <script-binding/>
                 </options>

@@ -1566,3 +1566,29 @@ PioneerDDJFLX10._initLoopLeds = function() {
 
 // Function to expand playlists folder (currently disabled)
 // This feature requires a different approach that will be implemented later
+
+// BEAT SYNC long press. Writing 1 to sync_leader requests explicit leader,
+// 2 means this deck already is the explicit leader.
+PioneerDDJFLX10.syncLeaderToggle = function(channel, control, value, status, group) {
+    if (value === 0) {
+        return;
+    }
+    var isLeader = engine.getValue(group, "sync_leader") === 2;
+    engine.setValue(group, "sync_leader", isLeader ? 0 : 1);
+};
+
+PioneerDDJFLX10._beatJumpAccum = {1: 0, 2: 0, 3: 0, 4: 0};
+var BEATJUMP_JOG_THRESHOLD = 24;
+
+PioneerDDJFLX10.jogBeatJump = function(channel, control, value, status, group) {
+    var deck = PioneerDDJFLX10._getDeckFromGroup(group);
+    var accum = PioneerDDJFLX10._beatJumpAccum[deck] + (value - 64);
+    if (accum >= BEATJUMP_JOG_THRESHOLD) {
+        script.triggerControl(group, "beatjump_forward");
+        accum = 0;
+    } else if (accum <= -BEATJUMP_JOG_THRESHOLD) {
+        script.triggerControl(group, "beatjump_backward");
+        accum = 0;
+    }
+    PioneerDDJFLX10._beatJumpAccum[deck] = accum;
+};
