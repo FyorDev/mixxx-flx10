@@ -270,6 +270,7 @@ PioneerDDJFLX10.init = function(id) {
 
     // EQ kill switches on the repurposed STEM buttons (lit = band on)
     PioneerDDJFLX10._initEqKillLeds();
+    PioneerDDJFLX10._initPartLeds();
 
     // Master EQ kills (master stem buttons → kill a band on all decks)
     PioneerDDJFLX10._initMasterEqKillLeds();
@@ -1394,6 +1395,10 @@ PioneerDDJFLX10._eqGroup = function(deck) {
     return "[EqualizerRack1_[Channel" + deck + "]_Effect1]";
 };
 PioneerDDJFLX10._renderEqKillLed = function(deck, idx) {
+    if (PioneerDDJFLX10._hasStems(deck)) {
+        PioneerDDJFLX10._renderPartLed(deck, idx);
+        return;
+    }
     var killed = engine.getValue(PioneerDDJFLX10._eqGroup(deck),
                                  PioneerDDJFLX10._EQ_KILL[idx].param) > 0;
     midi.sendShortMsg(0x90 + (deck - 1), PioneerDDJFLX10._EQ_KILL[idx].note,
@@ -1666,5 +1671,92 @@ PioneerDDJFLX10._initJogIndicators = function(group) {
     for (var k = 0; k < links.length; k++) {
         engine.makeConnection(group, links[k][0], links[k][1]);
         links[k][1](engine.getValue(group, links[k][0]), group);
+    }
+};
+
+// ACTIVE PART (STEMS) buttons. With a stem file loaded they mute/unmute the
+// part like rekordbox does; without stems they keep working as EQ kills.
+// Mixxx stem order follows the NI stem format: 1 drums, 2 bass, 3 other,
+// 4 vocals. The FLX10's INST part is bass + other.
+PioneerDDJFLX10._PART_STEMS = {0x0D: [1], 0x0E: [4], 0x0F: [2, 3]};
+PioneerDDJFLX10._PART_NOTES = [0x0D, 0x0E, 0x0F];
+PioneerDDJFLX10._SOLO_BASE = {0x24: 0x0D, 0x28: 0x0E, 0x2C: 0x0F};
+
+PioneerDDJFLX10._hasStems = function(deck) {
+    return engine.getValue("[Channel" + deck + "]", "stem_count") >= 4;
+};
+
+PioneerDDJFLX10._stemGroup = function(deck, stem) {
+    return "[Channel" + deck + "_Stem" + stem + "]";
+};
+
+PioneerDDJFLX10._partMuted = function(deck, note) {
+    var stems = PioneerDDJFLX10._PART_STEMS[note];
+    for (var i = 0; i < stems.length; i++) {
+        if (!engine.getValue(PioneerDDJFLX10._stemGroup(deck, stems[i]), "mute")) {
+            return false;
+        }
+    }
+    return true;
+};
+
+PioneerDDJFLX10._setPartMuted = function(deck, note, muted) {
+    var stems = PioneerDDJFLX10._PART_STEMS[note];
+    for (var i = 0; i < stems.length; i++) {
+        engine.setValue(PioneerDDJFLX10._stemGroup(deck, stems[i]), "mute", muted ? 1 : 0);
+    }
+};
+
+PioneerDDJFLX10._renderPartLed = function(deck, idx) {
+    var note = PioneerDDJFLX10._PART_NOTES[idx];
+    midi.sendShortMsg(0x90 + (deck - 1), note,
+        PioneerDDJFLX10._partMuted(deck, note) ? 0x00 : 0x7F);
+};
+
+PioneerDDJFLX10._renderPartLeds = function(deck) {
+    for (var idx = 0; idx < PioneerDDJFLX10._PART_NOTES.length; idx++) {
+        PioneerDDJFLX10._renderEqKillLed(deck, idx);
+    }
+};
+
+PioneerDDJFLX10.activePart = function(channel, control, value, status, group) {
+    var deck = PioneerDDJFLX10._getDeckFromGroup(group);
+    if (!PioneerDDJFLX10._hasStems(deck)) {
+        PioneerDDJFLX10.eqKill(channel, control, value, status, group);
+        return;
+    }
+    if (value === 0) {
+        return;
+    }
+    PioneerDDJFLX10._setPartMuted(deck, control, !PioneerDDJFLX10._partMuted(deck, control));
+};
+
+PioneerDDJFLX10.activePartSolo = function(channel, control, value, status, group) {
+    if (value === 0) {
+        return;
+    }
+    var note = PioneerDDJFLX10._SOLO_BASE[control & 0xFC];
+    var deck = (control & 0x03) + 1;
+    if (note === undefined || !PioneerDDJFLX10._hasStems(deck)) {
+        return;
+    }
+    for (var i = 0; i < PioneerDDJFLX10._PART_NOTES.length; i++) {
+        var n = PioneerDDJFLX10._PART_NOTES[i];
+        PioneerDDJFLX10._setPartMuted(deck, n, n !== note);
+    }
+};
+
+PioneerDDJFLX10._initPartLeds = function() {
+    for (var deck = 1; deck <= 4; deck++) {
+        (function(d) {
+            var refresh = function() {
+                PioneerDDJFLX10._renderPartLeds(d);
+            };
+            engine.makeConnection("[Channel" + d + "]", "stem_count", refresh);
+            for (var stem = 1; stem <= 4; stem++) {
+                engine.makeConnection(PioneerDDJFLX10._stemGroup(d, stem), "mute", refresh);
+            }
+            refresh();
+        })(deck);
     }
 };
