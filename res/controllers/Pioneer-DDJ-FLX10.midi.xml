@@ -20,6 +20,18 @@
             <value label="Serato HID (waveform)">serato</value>
             <value label="rekordbox HID (experimental)">rekordbox</value>
         </option>
+        <option variable="activePartMode" type="enum" label="ACTIVE PART buttons">
+            <description>Mute or solo the part, like the rekordbox ACTIVE PART setting.</description>
+            <value label="Mute" default="true">mute</value>
+            <value label="Solo">solo</value>
+        </option>
+        <option variable="hardwareLevels" type="boolean" default="true" label="Level knobs work in the unit">
+            <description>
+                MASTER LEVEL, HEADPHONES LEVEL and HEADPHONES MIX act in the unit's analogue
+                mixer, which also blends main and cue in the headphones. When on, Mixxx's
+                headphone mix is set to cue only and these knobs are not applied again in Mixxx.
+            </description>
+        </option>
         <option variable="mixPointLinkButton" type="enum" label="MIX POINT LINK button">
             <description>
                 Mix Point Link as in rekordbox, or Key Lock (master tempo) as in Serato.
@@ -35,6 +47,7 @@
             <file filename="Pioneer-DDJ-FLX10-pads.js" functionprefix=""/>
             <file filename="Pioneer-DDJ-FLX10-screen-sysex.js" functionprefix=""/>
             <file filename="Pioneer-DDJ-FLX10-mixpoint.js" functionprefix=""/>
+            <file filename="Pioneer-DDJ-FLX10-extras.js" functionprefix=""/>
         </scriptfiles>
         <controls>
             <control>
@@ -88,22 +101,12 @@
                 </options>
             </control>
             <control>
-                <group>[Sampler3]</group>
-                <key>pregain</key>
-                <description>Adjusts input gain (pregain)</description>
-                <status>0xB6</status>
-                <midino>0x03</midino>
-                <options>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel1]</group>
                 <key>pregain</key>
                 <status>0xB0</status>
                 <midino>0x04</midino>
                 <options>
-                    <normal/>
+                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -112,7 +115,7 @@
                 <status>0xB1</status>
                 <midino>0x04</midino>
                 <options>
-                    <normal/>
+                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -121,7 +124,7 @@
                 <status>0xB2</status>
                 <midino>0x04</midino>
                 <options>
-                    <normal/>
+                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -130,61 +133,7 @@
                 <status>0xB3</status>
                 <midino>0x04</midino>
                 <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel1]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB MSB CH1</description>
-                <status>0xB0</status>
-                <midino>0x07</midino>
-                <options>
-                    <selectknob/>
                     <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel2]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB MSB CH2</description>
-                <status>0xB1</status>
-                <midino>0x07</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel3]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB MSB CH3</description>
-                <status>0xB2</status>
-                <midino>0x07</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel4]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB MSB CH4</description>
-                <status>0xB3</status>
-                <midino>0x07</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[Master]</group>
-                <key>gain</key>
-                <description>GAIN MAster</description>
-                <status>0xB6</status>
-                <midino>0x08</midino>
-                <options>
-                    <normal/>
                 </options>
             </control>
             <control>
@@ -228,50 +177,6 @@
                 </options>
             </control>
             <control>
-                <group>[EqualizerRack1_[Channel1]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB MSB CH1</description>
-                <status>0xB0</status>
-                <midino>0x0B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel2]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB MSB CH2</description>
-                <status>0xB1</status>
-                <midino>0x0B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel3]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB MSB CH3</description>
-                <status>0xB2</status>
-                <midino>0x0B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel4]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB MSB CH4</description>
-                <status>0xB3</status>
-                <midino>0x0B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel1]</group>
                 <key>PioneerDDJFLX10.cueButton</key>
                 <description>CUE CH1 (Shift sets cue)</description>
@@ -309,68 +214,6 @@
                 <midino>0x0C</midino>
                 <options>
                     <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Master]</group>
-                <key>headMix</key>
-                <status>0xB6</status>
-                <midino>0x0C</midino>
-                <options>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[Master]</group>
-                <key>headGain</key>
-                <status>0xB6</status>
-                <midino>0x0D</midino>
-                <options>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel1]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB MSB CH1</description>
-                <status>0xB0</status>
-                <midino>0x0F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel2]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB MSB CH2</description>
-                <status>0xB1</status>
-                <midino>0x0F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel3]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB MSB CH3</description>
-                <status>0xB2</status>
-                <midino>0x0F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel4]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB MSB CH4</description>
-                <status>0xB3</status>
-                <midino>0x0F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-msb/>
                 </options>
             </control>
             <control>
@@ -995,16 +838,6 @@
                 </options>
             </control>
             <control>
-                <group>[Sampler3]</group>
-                <key>pregain</key>
-                <description>Adjusts input gain (pregain)</description>
-                <status>0xB6</status>
-                <midino>0x23</midino>
-                <options>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
                 <key>PioneerDDJFLX10.beatFxPad</key>
                 <description>BeatFX position 5</description>
@@ -1139,50 +972,6 @@
                 </options>
             </control>
             <control>
-                <group>[EqualizerRack1_[Channel1]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB LSB CH1</description>
-                <status>0xB0</status>
-                <midino>0x27</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel2]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB LSB CH2</description>
-                <status>0xB1</status>
-                <midino>0x27</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel3]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB LSB CH3</description>
-                <status>0xB2</status>
-                <midino>0x27</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel4]_Effect1]</group>
-                <key>parameter3</key>
-                <description>EQ HIGH KNOB LSB CH4</description>
-                <status>0xB3</status>
-                <midino>0x27</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
                 <key>PioneerDDJFLX10.beatFxPad</key>
                 <description>BeatFX position 9</description>
@@ -1223,50 +1012,6 @@
                 </options>
             </control>
             <control>
-                <group>[EqualizerRack1_[Channel1]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB LSB CH1</description>
-                <status>0xB0</status>
-                <midino>0x2B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel2]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB LSB CH2</description>
-                <status>0xB1</status>
-                <midino>0x2B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel3]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB LSB CH3</description>
-                <status>0xB2</status>
-                <midino>0x2B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel4]_Effect1]</group>
-                <key>parameter2</key>
-                <description>EQ MEDIUM KNOB LSB CH4</description>
-                <status>0xB3</status>
-                <midino>0x2B</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
                 <key>PioneerDDJFLX10.beatFxPad</key>
                 <description>BeatFX position 13</description>
@@ -1277,15 +1022,6 @@
                 </options>
             </control>
             <control>
-                <group>[Master]</group>
-                <key>headMix</key>
-                <status>0xB6</status>
-                <midino>0x2C</midino>
-                <options>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
                 <key>PioneerDDJFLX10.beatFxPad</key>
                 <description>BeatFX position 14</description>
@@ -1293,59 +1029,6 @@
                 <midino>0x2D</midino>
                 <options>
                     <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Master]</group>
-                <key>headGain</key>
-                <status>0xB6</status>
-                <midino>0x2D</midino>
-                <options>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel1]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB LSB CH1</description>
-                <status>0xB0</status>
-                <midino>0x2F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel2]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB LSB CH2</description>
-                <status>0xB1</status>
-                <midino>0x2F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel3]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB LSB CH3</description>
-                <status>0xB2</status>
-                <midino>0x2F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
-                </options>
-            </control>
-            <control>
-                <group>[EqualizerRack1_[Channel4]_Effect1]</group>
-                <key>parameter1</key>
-                <description>EQ LOW KNOB LSB CH4</description>
-                <status>0xB3</status>
-                <midino>0x2F</midino>
-                <options>
-                    <selectknob/>
-                    <fourteen-bit-lsb/>
                 </options>
             </control>
             <control>
@@ -1795,16 +1478,6 @@
                 </options>
             </control>
             <control>
-                <group>[Channel1]</group>
-                <key>LoadSelectedTrack</key>
-                <description>LOAD TRACK CH1</description>
-                <status>0x96</status>
-                <midino>0x46</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
                 <key>PioneerDDJFLX10.beatFxOnOff</key>
                 <description>BeatFX ON/OFF toggle</description>
@@ -1822,36 +1495,6 @@
                 <midino>0x47</midino>
                 <options>
                     <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>LoadSelectedTrack</key>
-                <description>LOAD TRACK CH2</description>
-                <status>0x96</status>
-                <midino>0x47</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>LoadSelectedTrack</key>
-                <description>LOAD TRACK CH3</description>
-                <status>0x96</status>
-                <midino>0x48</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>LoadSelectedTrack</key>
-                <description>LOAD TRACK CH4</description>
-                <status>0x96</status>
-                <midino>0x49</midino>
-                <options>
-                    <normal/>
                 </options>
             </control>
             <control>
@@ -2150,46 +1793,6 @@
                 <description>CHANGE FOCUS TO LEFT CH_ALL</description>
                 <status>0x96</status>
                 <midino>0x65</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>beatsync</key>
-                <description>Beat Sync CH1</description>
-                <status>0x90</status>
-                <midino>0x66</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>beatsync</key>
-                <description>Beat Sync CH2</description>
-                <status>0x91</status>
-                <midino>0x66</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>beatsync</key>
-                <description>Beat Sync CH3</description>
-                <status>0x92</status>
-                <midino>0x66</midino>
-                <options>
-                    <normal/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>beatsync</key>
-                <description>Beat Sync CH4</description>
-                <status>0x93</status>
-                <midino>0x66</midino>
                 <options>
                     <normal/>
                 </options>
@@ -2632,7 +2235,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Low kill (stem btn) CH1</description>
                 <status>0x90</status>
                 <midino>0x0D</midino>
@@ -2642,7 +2245,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Mid kill (stem btn) CH1</description>
                 <status>0x90</status>
                 <midino>0x0E</midino>
@@ -2652,7 +2255,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ High kill (stem btn) CH1</description>
                 <status>0x90</status>
                 <midino>0x0F</midino>
@@ -2662,7 +2265,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Low kill (stem btn) CH2</description>
                 <status>0x91</status>
                 <midino>0x0D</midino>
@@ -2672,7 +2275,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Mid kill (stem btn) CH2</description>
                 <status>0x91</status>
                 <midino>0x0E</midino>
@@ -2682,7 +2285,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ High kill (stem btn) CH2</description>
                 <status>0x91</status>
                 <midino>0x0F</midino>
@@ -2692,7 +2295,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Low kill (stem btn) CH3</description>
                 <status>0x92</status>
                 <midino>0x0D</midino>
@@ -2702,7 +2305,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Mid kill (stem btn) CH3</description>
                 <status>0x92</status>
                 <midino>0x0E</midino>
@@ -2712,7 +2315,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ High kill (stem btn) CH3</description>
                 <status>0x92</status>
                 <midino>0x0F</midino>
@@ -2722,7 +2325,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Low kill (stem btn) CH4</description>
                 <status>0x93</status>
                 <midino>0x0D</midino>
@@ -2732,7 +2335,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ Mid kill (stem btn) CH4</description>
                 <status>0x93</status>
                 <midino>0x0E</midino>
@@ -2742,7 +2345,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.activePart</key>
+                <key>PioneerDDJFLX10Extras.activePart</key>
                 <description>EQ High kill (stem btn) CH4</description>
                 <status>0x93</status>
                 <midino>0x0F</midino>
@@ -2892,16 +2495,6 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.syncLeaderToggle</key>
-                <description>BEAT SYNC long press CH1: toggle sync leader</description>
-                <status>0x90</status>
-                <midino>0x78</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
                 <key>reverse</key>
                 <description>SHIFT + SLIP REVERSE CH1: reverse play</description>
                 <status>0x90</status>
@@ -2966,16 +2559,6 @@
                 <description>SHIFT + Jog touch CH2</description>
                 <status>0x91</status>
                 <midino>0x67</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.syncLeaderToggle</key>
-                <description>BEAT SYNC long press CH2: toggle sync leader</description>
-                <status>0x91</status>
-                <midino>0x78</midino>
                 <options>
                     <script-binding/>
                 </options>
@@ -3062,16 +2645,6 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.syncLeaderToggle</key>
-                <description>BEAT SYNC long press CH3: toggle sync leader</description>
-                <status>0x92</status>
-                <midino>0x78</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
                 <key>reverse</key>
                 <description>SHIFT + SLIP REVERSE CH3: reverse play</description>
                 <status>0x92</status>
@@ -3152,16 +2725,6 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.syncLeaderToggle</key>
-                <description>BEAT SYNC long press CH4: toggle sync leader</description>
-                <status>0x93</status>
-                <midino>0x78</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
                 <key>reverse</key>
                 <description>SHIFT + SLIP REVERSE CH4: reverse play</description>
                 <status>0x93</status>
@@ -3206,126 +2769,6 @@
                 <description>SHIFT + Tempo fader LSB CH4 (14-bit)</description>
                 <status>0xB3</status>
                 <midino>0x25</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART DRUMS pressed twice CH1: solo part</description>
-                <status>0x96</status>
-                <midino>0x24</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART DRUMS pressed twice CH2: solo part</description>
-                <status>0x96</status>
-                <midino>0x25</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART DRUMS pressed twice CH3: solo part</description>
-                <status>0x96</status>
-                <midino>0x26</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART DRUMS pressed twice CH4: solo part</description>
-                <status>0x96</status>
-                <midino>0x27</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART VOCAL pressed twice CH1: solo part</description>
-                <status>0x96</status>
-                <midino>0x28</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART VOCAL pressed twice CH2: solo part</description>
-                <status>0x96</status>
-                <midino>0x29</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART VOCAL pressed twice CH3: solo part</description>
-                <status>0x96</status>
-                <midino>0x2A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART VOCAL pressed twice CH4: solo part</description>
-                <status>0x96</status>
-                <midino>0x2B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART INST pressed twice CH1: solo part</description>
-                <status>0x96</status>
-                <midino>0x2C</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART INST pressed twice CH2: solo part</description>
-                <status>0x96</status>
-                <midino>0x2D</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART INST pressed twice CH3: solo part</description>
-                <status>0x96</status>
-                <midino>0x2E</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.activePartSolo</key>
-                <description>SHIFT + ACTIVE PART INST pressed twice CH4: solo part</description>
-                <status>0x96</status>
-                <midino>0x2F</midino>
                 <options>
                     <script-binding/>
                 </options>
@@ -6131,166 +5574,6 @@
                 </options>
             </control>
             <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x01</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x02</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x03</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x04</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x05</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x06</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x07</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x08</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x09</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x7A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x7B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x7C</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x7D</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x7E</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x7F</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel1]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH1: sampler bank</description>
-                <status>0x90</status>
-                <midino>0x00</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel2]</group>
                 <key>PioneerDDJFLX10Pads.pad</key>
                 <description>Pad note 0x00 deck 2</description>
@@ -9086,166 +8369,6 @@
                 <description>PAGE &gt; CH2</description>
                 <status>0x91</status>
                 <midino>0x33</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x01</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x02</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x03</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x04</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x05</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x06</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x07</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x08</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x09</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x7A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x7B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x7C</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x7D</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x7E</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x7F</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel2]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH2: sampler bank</description>
-                <status>0x91</status>
-                <midino>0x00</midino>
                 <options>
                     <script-binding/>
                 </options>
@@ -12051,166 +11174,6 @@
                 </options>
             </control>
             <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x01</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x02</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x03</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x04</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x05</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x06</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x07</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x08</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x09</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x7A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x7B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x7C</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x7D</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x7E</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x7F</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel3]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH3: sampler bank</description>
-                <status>0x92</status>
-                <midino>0x00</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel4]</group>
                 <key>PioneerDDJFLX10Pads.pad</key>
                 <description>Pad note 0x00 deck 4</description>
@@ -15011,166 +13974,6 @@
                 </options>
             </control>
             <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x01</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x02</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x03</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x04</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x05</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x06</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x07</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankPrev</key>
-                <description>SHIFT + PAGE &lt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x08</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x09</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x7A</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x7B</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x7C</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x7D</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x7E</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x7F</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
-                <group>[Channel4]</group>
-                <key>PioneerDDJFLX10Pads.bankNext</key>
-                <description>SHIFT + PAGE &gt; CH4: sampler bank</description>
-                <status>0x93</status>
-                <midino>0x00</midino>
-                <options>
-                    <script-binding/>
-                </options>
-            </control>
-            <control>
                 <group>[Channel1]</group>
                 <key>PioneerDDJFLX10MixPoint.link</key>
                 <description>MIX POINT LINK CH1 (or Key Lock, see settings)</description>
@@ -15406,6 +14209,746 @@
                 <description>SHIFT + MIX POINT SELECT &gt; CH4: deck to mix from</description>
                 <status>0x93</status>
                 <midino>0x42</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.masterLevel</key>
+                <description>masterLevel MSB (analogue on the unit)</description>
+                <status>0xB6</status>
+                <midino>0x08</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.masterLevel</key>
+                <description>masterLevel LSB (analogue on the unit)</description>
+                <status>0xB6</status>
+                <midino>0x28</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.headphoneLevel</key>
+                <description>headphoneLevel MSB (analogue on the unit)</description>
+                <status>0xB6</status>
+                <midino>0x0D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.headphoneLevel</key>
+                <description>headphoneLevel LSB (analogue on the unit)</description>
+                <status>0xB6</status>
+                <midino>0x2D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.headphoneMix</key>
+                <description>headphoneMix MSB (analogue on the unit)</description>
+                <status>0xB6</status>
+                <midino>0x0C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.headphoneMix</key>
+                <description>headphoneMix LSB (analogue on the unit)</description>
+                <status>0xB6</status>
+                <midino>0x2C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.samplerVolume</key>
+                <description>SAMPLER VOL MSB</description>
+                <status>0xB6</status>
+                <midino>0x03</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.samplerVolume</key>
+                <description>SAMPLER VOL LSB</description>
+                <status>0xB6</status>
+                <midino>0x23</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.samplerCue</key>
+                <description>SAMPLER CUE</description>
+                <status>0x96</status>
+                <midino>0x69</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.samplerCue</key>
+                <description>SHIFT + SAMPLER CUE</description>
+                <status>0x96</status>
+                <midino>0x6E</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Extras.viewHold</key>
+                <description>VIEW long press: add to Auto DJ</description>
+                <status>0x96</status>
+                <midino>0x67</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[EffectRack1_EffectUnit1]</group>
+                <key>PioneerDDJFLX10Extras.beatDown</key>
+                <description>BEAT &lt;</description>
+                <status>0x94</status>
+                <midino>0x4A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[EffectRack1_EffectUnit1]</group>
+                <key>PioneerDDJFLX10Extras.beatUp</key>
+                <description>BEAT &gt;</description>
+                <status>0x94</status>
+                <midino>0x4B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[EffectRack1_EffectUnit1]</group>
+                <key>PioneerDDJFLX10Extras.releaseFx</key>
+                <description>SHIFT + BEAT FX ON/OFF: Release FX</description>
+                <status>0x94</status>
+                <midino>0x43</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.load</key>
+                <description>Rotary press, deck 1: load / open, twice: Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x46</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.load</key>
+                <description>Rotary press, deck 2: load / open, twice: Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x47</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.load</key>
+                <description>Rotary press, deck 3: load / open, twice: Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x48</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.load</key>
+                <description>Rotary press, deck 4: load / open, twice: Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x49</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH1: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x24</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH2: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x25</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH3: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x26</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH4: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x27</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH1: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x28</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH2: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x29</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH3: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x2A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH4: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x2B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH1: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x2C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH2: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x2D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH3: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x2E</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.partInstantDoubles</key>
+                <description>SHIFT + ACTIVE PART twice CH4: Part Instant Doubles</description>
+                <status>0x96</status>
+                <midino>0x2F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.faderStartPlay</key>
+                <description>Fader start PLAY CH1</description>
+                <status>0x90</status>
+                <midino>0x66</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.faderStartSync</key>
+                <description>Fader start with SHIFT: SYNC + PLAY CH1</description>
+                <status>0x90</status>
+                <midino>0x5D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.faderStartCue</key>
+                <description>Fader start CUE CH1</description>
+                <status>0x90</status>
+                <midino>0x52</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.syncMaster</key>
+                <description>SHIFT + BEAT SYNC CH1: master</description>
+                <status>0x90</status>
+                <midino>0x5C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.togglePartIso</key>
+                <description>SHIFT + headphones CUE CH1: EQ / Part ISO</description>
+                <status>0x90</status>
+                <midino>0x39</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH1</description>
+                <status>0xB0</status>
+                <midino>0x07</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH1</description>
+                <status>0xB0</status>
+                <midino>0x27</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH1</description>
+                <status>0xB0</status>
+                <midino>0x0B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH1</description>
+                <status>0xB0</status>
+                <midino>0x2B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH1</description>
+                <status>0xB0</status>
+                <midino>0x0F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel1]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH1</description>
+                <status>0xB0</status>
+                <midino>0x2F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.faderStartPlay</key>
+                <description>Fader start PLAY CH2</description>
+                <status>0x91</status>
+                <midino>0x66</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.faderStartSync</key>
+                <description>Fader start with SHIFT: SYNC + PLAY CH2</description>
+                <status>0x91</status>
+                <midino>0x5D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.faderStartCue</key>
+                <description>Fader start CUE CH2</description>
+                <status>0x91</status>
+                <midino>0x52</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.syncMaster</key>
+                <description>SHIFT + BEAT SYNC CH2: master</description>
+                <status>0x91</status>
+                <midino>0x5C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.togglePartIso</key>
+                <description>SHIFT + headphones CUE CH2: EQ / Part ISO</description>
+                <status>0x91</status>
+                <midino>0x39</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH2</description>
+                <status>0xB1</status>
+                <midino>0x07</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH2</description>
+                <status>0xB1</status>
+                <midino>0x27</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH2</description>
+                <status>0xB1</status>
+                <midino>0x0B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH2</description>
+                <status>0xB1</status>
+                <midino>0x2B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH2</description>
+                <status>0xB1</status>
+                <midino>0x0F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel2]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH2</description>
+                <status>0xB1</status>
+                <midino>0x2F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.faderStartPlay</key>
+                <description>Fader start PLAY CH3</description>
+                <status>0x92</status>
+                <midino>0x66</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.faderStartSync</key>
+                <description>Fader start with SHIFT: SYNC + PLAY CH3</description>
+                <status>0x92</status>
+                <midino>0x5D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.faderStartCue</key>
+                <description>Fader start CUE CH3</description>
+                <status>0x92</status>
+                <midino>0x52</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.syncMaster</key>
+                <description>SHIFT + BEAT SYNC CH3: master</description>
+                <status>0x92</status>
+                <midino>0x5C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.togglePartIso</key>
+                <description>SHIFT + headphones CUE CH3: EQ / Part ISO</description>
+                <status>0x92</status>
+                <midino>0x39</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH3</description>
+                <status>0xB2</status>
+                <midino>0x07</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH3</description>
+                <status>0xB2</status>
+                <midino>0x27</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH3</description>
+                <status>0xB2</status>
+                <midino>0x0B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH3</description>
+                <status>0xB2</status>
+                <midino>0x2B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH3</description>
+                <status>0xB2</status>
+                <midino>0x0F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel3]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH3</description>
+                <status>0xB2</status>
+                <midino>0x2F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.faderStartPlay</key>
+                <description>Fader start PLAY CH4</description>
+                <status>0x93</status>
+                <midino>0x66</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.faderStartSync</key>
+                <description>Fader start with SHIFT: SYNC + PLAY CH4</description>
+                <status>0x93</status>
+                <midino>0x5D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.faderStartCue</key>
+                <description>Fader start CUE CH4</description>
+                <status>0x93</status>
+                <midino>0x52</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.syncMaster</key>
+                <description>SHIFT + BEAT SYNC CH4: master</description>
+                <status>0x93</status>
+                <midino>0x5C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.togglePartIso</key>
+                <description>SHIFT + headphones CUE CH4: EQ / Part ISO</description>
+                <status>0x93</status>
+                <midino>0x39</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH4</description>
+                <status>0xB3</status>
+                <midino>0x07</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH4</description>
+                <status>0xB3</status>
+                <midino>0x27</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH4</description>
+                <status>0xB3</status>
+                <midino>0x0B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH4</description>
+                <status>0xB3</status>
+                <midino>0x2B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH4</description>
+                <status>0xB3</status>
+                <midino>0x0F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Channel4]</group>
+                <key>PioneerDDJFLX10Extras.eqKnob</key>
+                <description>EQ / Part ISO knob CH4</description>
+                <status>0xB3</status>
+                <midino>0x2F</midino>
                 <options>
                     <script-binding/>
                 </options>
