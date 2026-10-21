@@ -839,21 +839,33 @@ PioneerDDJFLX10Pads.cueCall = function(direction) {
         if (!value || !engine.getValue(group, "track_loaded")) {
             return;
         }
+        // As on the FLX10 in rekordbox, CUE/LOOP CALL steps through the
+        // memory cues and loops only; hot cues stay on the pads.
         const here = PioneerDDJFLX10Pads.playSamples(group);
         const margin = PioneerDDJFLX10Pads.samplesPerSecond(group) * 0.05;
-        const points = [engine.getValue(group, "cue_point")];
-        for (let i = 1; i <= PioneerDDJFLX10Pads.memoryLast; i++) {
-            points.push(engine.getValue(group, `hotcue_${i}_position`));
+        let best = 0;
+        let bestPos = -1;
+        for (let i = PioneerDDJFLX10Pads.memoryFirst; i <= PioneerDDJFLX10Pads.memoryLast; i++) {
+            const p = engine.getValue(group, `hotcue_${i}_position`);
+            if (p < 0 || (direction < 0 ? p >= here - margin : p <= here + margin)) {
+                continue;
+            }
+            if (!best || (direction < 0 ? p > bestPos : p < bestPos)) {
+                best = i;
+                bestPos = p;
+            }
         }
-        const candidates = points.filter((p) => p >= 0 && (direction < 0 ? p < here - margin : p > here + margin));
-        if (!candidates.length) {
+        if (!best) {
             return;
         }
-        const target = direction < 0 ? Math.max.apply(null, candidates) : Math.min.apply(null, candidates);
-        PioneerDDJFLX10Pads.seekSamples(group, target);
+        // A memory loop is called up as a loop; a memory cue becomes the CUE
+        // point when paused, as on a CDJ.
+        if (engine.getValue(group, `hotcue_${best}_type`) === 4) {
+            engine.setValue(group, `hotcue_${best}_gotoandloop`, 1);
+            return;
+        }
+        PioneerDDJFLX10Pads.seekSamples(group, bestPos);
         if (!engine.getValue(group, "play")) {
-            // A called cue becomes the CUE point, as on a CDJ. This replaces
-            // the track's stored cue point (noted in the manual).
             engine.setValue(group, "cue_set", 1);
         }
     };
