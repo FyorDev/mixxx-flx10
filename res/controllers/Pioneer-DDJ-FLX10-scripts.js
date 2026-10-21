@@ -237,6 +237,7 @@ PioneerDDJFLX10.init = function(id) {
         PioneerDDJFLX10.jogBpm(engine.getValue(grp, "bpm"), grp, "bpm");
         PioneerDDJFLX10.jogSpeed(engine.getValue(grp, "rate"), grp, "rate");
         PioneerDDJFLX10.jogTime(engine.getValue(grp, "playposition"), grp, "playposition");
+        PioneerDDJFLX10._initJogIndicators(grp);
     }
     // Poll all four decks every 250 ms and push time to jog displays.
     // Using a timer rather than a playposition callback because Mixxx throttles
@@ -1591,4 +1592,79 @@ PioneerDDJFLX10.jogBeatJump = function(channel, control, value, status, group) {
         accum = 0;
     }
     PioneerDDJFLX10._beatJumpAccum[deck] = accum;
+};
+
+// Jog display indicators from the "MIDI-OUT jog display" table of the
+// DDJ-FLX10 MIDI message list: MASTER, SYNC and master tempo icons, cue
+// point needle, key and key change amount.
+var _JOG_MASTER_NOTE    = [0x18, 0x19, 0x1A, 0x1B];
+var _JOG_SYNC_NOTE      = [0x1C, 0x1D, 0x1E, 0x1F];
+var _JOG_KEYLOCK_NOTE   = [0x20, 0x21, 0x22, 0x23];
+var _JOG_CUE_MSB        = [0x1C, 0x1D, 0x1E, 0x1F];
+var _JOG_CUE_LSB        = [0x3C, 0x3D, 0x3E, 0x3F];
+var JOG_KEY_CC          = 0x49;
+var JOG_KEY_CHANGE_CC   = 0x4A;
+
+// Mixxx ChromaticKey 1-24 to the Pioneer key code 0x01-0x18.
+PioneerDDJFLX10.PIONEER_KEY_FROM_MIXXX = {
+    1: 0x01,  2: 0x03,  3: 0x05,  4: 0x07,  5: 0x09,  6: 0x0B,
+    7: 0x0D,  8: 0x0F,  9: 0x11, 10: 0x13, 11: 0x15, 12: 0x17,
+    13: 0x08, 14: 0x0A, 15: 0x0C, 16: 0x0E, 17: 0x10, 18: 0x12,
+    19: 0x14, 20: 0x16, 21: 0x18, 22: 0x02, 23: 0x04, 24: 0x06
+};
+
+PioneerDDJFLX10._jogNote = function(notes, group, on) {
+    var i = PioneerDDJFLX10._getDeckFromGroup(group) - 1;
+    midi.sendShortMsg(JOG_DISPLAY_NOTE, notes[i], on ? 0x7F : 0x00);
+};
+
+PioneerDDJFLX10.jogSyncLeader = function(value, group) {
+    PioneerDDJFLX10._jogNote(_JOG_MASTER_NOTE, group, value > 0);
+};
+
+PioneerDDJFLX10.jogSyncEnabled = function(value, group) {
+    PioneerDDJFLX10._jogNote(_JOG_SYNC_NOTE, group, value > 0);
+};
+
+PioneerDDJFLX10.jogKeylock = function(value, group) {
+    PioneerDDJFLX10._jogNote(_JOG_KEYLOCK_NOTE, group, value > 0);
+};
+
+PioneerDDJFLX10.jogCuePoint = function(value, group) {
+    var i = PioneerDDJFLX10._getDeckFromGroup(group) - 1;
+    var cue = engine.getValue(group, "cue_point");
+    var samples = engine.getValue(group, "track_samples");
+    if (cue < 0 || !(samples > 0)) {
+        midi.sendShortMsg(JOG_DISPLAY_CC, _JOG_CUE_MSB[i], 0x7F);
+        midi.sendShortMsg(JOG_DISPLAY_CC, _JOG_CUE_LSB[i], 0x7F);
+        return;
+    }
+    var deg = Math.max(0, Math.min(359, Math.round(cue / samples * 359)));
+    PioneerDDJFLX10._jogSend14(_JOG_CUE_MSB[i], _JOG_CUE_LSB[i], deg);
+};
+
+PioneerDDJFLX10.jogKey = function(value, group) {
+    var d = PioneerDDJFLX10._getDeckFromGroup(group) - 1;
+    var key = Math.round(engine.getValue(group, "key"));
+    midi.sendShortMsg(0xB0 + d, JOG_KEY_CC, PioneerDDJFLX10.PIONEER_KEY_FROM_MIXXX[key] || 0x00);
+    // 0x01-0x0C = -12..-1 semitones, 0x0D = 0, up to 0x19 = +12.
+    var shift = Math.round(engine.getValue(group, "pitch_adjust"));
+    shift = Math.max(-12, Math.min(12, shift));
+    midi.sendShortMsg(0xB0 + d, JOG_KEY_CHANGE_CC, 0x0D + shift);
+};
+
+PioneerDDJFLX10._initJogIndicators = function(group) {
+    var links = [
+        ["sync_leader", PioneerDDJFLX10.jogSyncLeader],
+        ["sync_enabled", PioneerDDJFLX10.jogSyncEnabled],
+        ["keylock", PioneerDDJFLX10.jogKeylock],
+        ["cue_point", PioneerDDJFLX10.jogCuePoint],
+        ["track_samples", PioneerDDJFLX10.jogCuePoint],
+        ["key", PioneerDDJFLX10.jogKey],
+        ["pitch_adjust", PioneerDDJFLX10.jogKey],
+    ];
+    for (var k = 0; k < links.length; k++) {
+        engine.makeConnection(group, links[k][0], links[k][1]);
+        links[k][1](engine.getValue(group, links[k][0]), group);
+    }
 };
