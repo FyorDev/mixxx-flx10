@@ -757,3 +757,62 @@ PioneerDDJFLX10Pads.padColors = {
         PioneerDDJFLX10Pads.semitoneColor(deck, PioneerDDJFLX10Pads.mode.keyShift, page, pad),
 };
 
+
+PioneerDDJFLX10Pads.connectSamplers = function() {
+    const count = PioneerDDJFLX10Pads.numSamplers();
+    for (let i = PioneerDDJFLX10Pads.samplersConnected + 1; i <= count; i++) {
+        PioneerDDJFLX10Pads.listen(`[Sampler${i}]`, "track_loaded", () => PioneerDDJFLX10Pads.renderSamplerPad(i));
+        PioneerDDJFLX10Pads.listen(`[Sampler${i}]`, "play", () => PioneerDDJFLX10Pads.renderSamplerPad(i));
+    }
+    PioneerDDJFLX10Pads.samplersConnected = Math.max(count, PioneerDDJFLX10Pads.samplersConnected);
+};
+
+// Mixxx opens the MIDI output only after init() returns, so the pads are
+// drawn from the first tick.
+PioneerDDJFLX10Pads.tick = function() {
+    if (!PioneerDDJFLX10Pads.opened) {
+        PioneerDDJFLX10Pads.opened = true;
+        PioneerDDJFLX10Pads.sent = {};
+        PioneerDDJFLX10Pads.decks.forEach((deck) => PioneerDDJFLX10Pads.updateModeLeds(deck));
+        PioneerDDJFLX10Pads.queueAllPads();
+    }
+    const now = Date.now();
+    if (now - PioneerDDJFLX10Pads.blinkAt >= PioneerDDJFLX10Pads.config.blinkMs) {
+        PioneerDDJFLX10Pads.blink = !PioneerDDJFLX10Pads.blink;
+        PioneerDDJFLX10Pads.blinkAt = now;
+        PioneerDDJFLX10Pads.decks.forEach((deck) => PioneerDDJFLX10Pads.renderBlinkingPads(deck));
+    }
+    const queued = PioneerDDJFLX10Pads.padQueue.shift();
+    if (queued) {
+        PioneerDDJFLX10Pads.renderMode(queued[0], queued[1]);
+    }
+};
+
+PioneerDDJFLX10Pads.init = function() {
+    PioneerDDJFLX10Pads.colorMapper = PioneerDDJFLX10Pads.buildColorMapper();
+    PioneerDDJFLX10Pads.decks.forEach((deck) => {
+        PioneerDDJFLX10Pads.deck[deck] = PioneerDDJFLX10Pads.newDeckState();
+        PioneerDDJFLX10Pads.connectPads(deck);
+    });
+    PioneerDDJFLX10Pads.connectSamplers();
+    PioneerDDJFLX10Pads.listen("[App]", "num_samplers", PioneerDDJFLX10Pads.connectSamplers);
+    PioneerDDJFLX10Pads.timer = engine.beginTimer(PioneerDDJFLX10Pads.config.tickMs, PioneerDDJFLX10Pads.tick);
+};
+
+PioneerDDJFLX10Pads.shutdown = function() {
+    if (PioneerDDJFLX10Pads.timer) {
+        engine.stopTimer(PioneerDDJFLX10Pads.timer);
+        PioneerDDJFLX10Pads.timer = 0;
+    }
+    Object.keys(PioneerDDJFLX10Pads.heldUnits).forEach((unit) => PioneerDDJFLX10Pads.releaseUnit(unit));
+    PioneerDDJFLX10Pads.connections.concat(PioneerDDJFLX10Pads.listeners).forEach((c) => c.disconnect());
+    PioneerDDJFLX10Pads.connections = [];
+    PioneerDDJFLX10Pads.listeners = [];
+    PioneerDDJFLX10Pads.restoreOverrides();
+    Object.keys(PioneerDDJFLX10Pads.sent).forEach((key) => {
+        const parts = key.split(":").map(Number);
+        if ((parts[0] & 0xF0) === 0x90) {
+            midi.sendShortMsg(parts[0], parts[1], 0x00);
+        }
+    });
+};

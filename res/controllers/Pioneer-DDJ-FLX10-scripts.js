@@ -169,12 +169,6 @@ PioneerDDJFLX10._refreshOutputLeds = function() {
             midi.sendShortMsg(status, led.note,
                 engine.getValue(group, led.key) > 0.5 ? 0x7F : 0x00);
         }
-        // Re-render hot-cue pad LEDs (same startup-timing vulnerability).
-        if (PioneerDDJFLX10._hotcue && PioneerDDJFLX10._hotcue[deck]) {
-            for (var pad = 1; pad <= 8; pad++) {
-                PioneerDDJFLX10._renderHotcue(deck, pad);
-            }
-        }
         // Re-render loop in/out button LEDs.
         if (PioneerDDJFLX10._renderLoopLeds) {
             PioneerDDJFLX10._renderLoopLeds(deck);
@@ -190,12 +184,6 @@ PioneerDDJFLX10._refreshOutputLeds = function() {
     if (PioneerDDJFLX10._renderMasterEqKillLed) {
         for (var mi = 0; mi < 3; mi++) {
             PioneerDDJFLX10._renderMasterEqKillLed(mi);
-        }
-    }
-    // Sampler pad LEDs (once — Sampler1-8).
-    if (PioneerDDJFLX10._renderSamplerLed) {
-        for (var sn = 1; sn <= 8; sn++) {
-            PioneerDDJFLX10._renderSamplerLed(sn);
         }
     }
 };
@@ -262,8 +250,8 @@ PioneerDDJFLX10.init = function(id) {
     // LEDs Play/Cue avancées (Pioneer-like)
     PioneerDDJFLX10._initAdvancedLeds();
 
-    // Hot-cue pad RGB LEDs (color-matched to Mixxx hot-cue colors, blink on loops)
-    PioneerDDJFLX10._initHotcueLeds();
+    // Performance pads (all modes, both pages, colours): Pioneer-DDJ-FLX10-pads.js
+    PioneerDDJFLX10Pads.init();
 
     // Loop in/out button LEDs (blink while setting/adjusting, solid when active)
     PioneerDDJFLX10._initLoopLeds();
@@ -275,8 +263,6 @@ PioneerDDJFLX10.init = function(id) {
     // Master EQ kills (master stem buttons → kill a band on all decks)
     PioneerDDJFLX10._initMasterEqKillLeds();
 
-    // Sampler pad LEDs (lit when a sampler is loaded, blink while playing)
-    PioneerDDJFLX10._initSamplerLeds();
 
     // Re-push LED state once the controller is ready to receive — the FLX10
     // misses Mixxx's initial output burst at launch (see _refreshOutputLeds).
@@ -410,6 +396,7 @@ PioneerDDJFLX10.keySyncToggle = function(channel, control, value, status, group)
 // Shutdown
 PioneerDDJFLX10.shutdown = function() {
     console.log("Pioneer DDJ-FLX10 PROD - Arrêt");
+    PioneerDDJFLX10Pads.shutdown();
     if (typeof PioneerDDJFLX10.screen !== "undefined") {
         PioneerDDJFLX10.screen.stop();
     }
