@@ -2769,7 +2769,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.masterEqKill</key>
+                <key>PioneerDDJFLX10.fxPartSelect</key>
                 <description>Master EQ Mid kill all decks (stem btn)</description>
                 <status>0x96</status>
                 <midino>0x1B</midino>
@@ -2779,7 +2779,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.masterEqKill</key>
+                <key>PioneerDDJFLX10.fxPartSelect</key>
                 <description>Master EQ Low kill all decks (stem btn)</description>
                 <status>0x96</status>
                 <midino>0x1C</midino>
@@ -2789,7 +2789,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.masterEqKill</key>
+                <key>PioneerDDJFLX10.fxPartSelect</key>
                 <description>Master EQ High kill all decks (stem btn)</description>
                 <status>0x96</status>
                 <midino>0x1D</midino>
@@ -2799,7 +2799,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.masterEqKill</key>
+                <key>PioneerDDJFLX10.fxPartSelect</key>
                 <description>Master EQ Mid kill all decks (stem btn, note-off)</description>
                 <status>0x86</status>
                 <midino>0x1B</midino>
@@ -2809,7 +2809,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.masterEqKill</key>
+                <key>PioneerDDJFLX10.fxPartSelect</key>
                 <description>Master EQ Low kill all decks (stem btn, note-off)</description>
                 <status>0x86</status>
                 <midino>0x1C</midino>
@@ -2819,7 +2819,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.masterEqKill</key>
+                <key>PioneerDDJFLX10.fxPartSelect</key>
                 <description>Master EQ High kill all decks (stem btn, note-off)</description>
                 <status>0x86</status>
                 <midino>0x1D</midino>

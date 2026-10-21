@@ -1209,6 +1209,7 @@ PioneerDDJFLX10.soundColorFx = function(channel, control, value, status, group) 
         if (PioneerDDJFLX10._colorFxActive === control) {
             for (i = 0; i < channels.length; i++) {
                 engine.setValue("[QuickEffectRack1_" + channels[i] + "]", "loaded_chain_preset", 0);
+                PioneerDDJFLX10._loadStemColorFx(i + 1, 0);
             }
             PioneerDDJFLX10._colorFxActive = -1;
         }
@@ -1217,6 +1218,7 @@ PioneerDDJFLX10.soundColorFx = function(channel, control, value, status, group) 
         for (i = 0; i < channels.length; i++) {
             engine.setValue("[QuickEffectRack1_" + channels[i] + "]", "loaded_chain_preset", preset);
             engine.setValue("[QuickEffectRack1_" + channels[i] + "_Effect1]", "enabled", 1);
+            PioneerDDJFLX10._loadStemColorFx(i + 1, preset);
             // Block each channel's knob immediately with a sentinel that no physical
             // position can match, preventing any jump before the preset settles.
             PioneerDDJFLX10._colorFxSoftTakeover[i + 1] = true;
@@ -1263,6 +1265,9 @@ PioneerDDJFLX10.soundColorFxKnobLSB = function(channel, control, value, status, 
         }
     }
 
+    if (PioneerDDJFLX10._colorFxOnParts(deck, position)) {
+        return;
+    }
     engine.setValue("[QuickEffectRack1_[Channel" + deck + "]]", "super1", position);
 };
 
@@ -1746,4 +1751,65 @@ PioneerDDJFLX10._initPartLeds = function() {
             refresh();
         })(deck);
     }
+};
+
+// FX PART SELECT (VOCAL / DRUMS / INST, channel 7 notes 0x1B/0x1C/0x1D,
+// latching). With stems loaded, the lit parts are the ones the Sound Color FX
+// knob acts on, through each stem's own Quick Effect. Beat FX cannot follow:
+// Mixxx effect units cannot be routed to a single stem. With no stem track
+// loaded on any deck the buttons keep their master EQ kill function.
+PioneerDDJFLX10._FX_PART_NOTES = {0x1B: 0x0E, 0x1C: 0x0D, 0x1D: 0x0F};
+PioneerDDJFLX10._fxPartSelected = {0x1B: false, 0x1C: false, 0x1D: false};
+
+PioneerDDJFLX10._anyDeckHasStems = function() {
+    for (var d = 1; d <= 4; d++) {
+        if (PioneerDDJFLX10._hasStems(d)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+PioneerDDJFLX10.fxPartSelect = function(channel, control, value, status, group) {
+    var lit = ((status & 0xF0) === 0x90) && (value > 0);
+    if (!PioneerDDJFLX10._anyDeckHasStems()) {
+        PioneerDDJFLX10.masterEqKill(channel, control, value, status, group);
+        return;
+    }
+    PioneerDDJFLX10._fxPartSelected[control] = lit;
+    for (var d = 1; d <= 4; d++) {
+        PioneerDDJFLX10._colorFxOnParts(d, PioneerDDJFLX10._colorFxKnobPosition[d]);
+    }
+};
+
+PioneerDDJFLX10._selectedStems = function() {
+    var stems = [];
+    Object.keys(PioneerDDJFLX10._fxPartSelected).forEach(function(note) {
+        if (PioneerDDJFLX10._fxPartSelected[note]) {
+            var part = PioneerDDJFLX10._FX_PART_NOTES[note];
+            stems = stems.concat(PioneerDDJFLX10._PART_STEMS[part]);
+        }
+    });
+    return stems;
+};
+
+PioneerDDJFLX10._loadStemColorFx = function(deck, preset) {
+    for (var stem = 1; stem <= 4; stem++) {
+        var rack = "[QuickEffectRack1_" + PioneerDDJFLX10._stemGroup(deck, stem) + "]";
+        engine.setValue(rack, "loaded_chain_preset", preset);
+    }
+};
+
+// Returns true when the knob was applied to stem parts instead of the deck.
+PioneerDDJFLX10._colorFxOnParts = function(deck, position) {
+    var selected = PioneerDDJFLX10._selectedStems();
+    if (!selected.length || !PioneerDDJFLX10._hasStems(deck)) {
+        return false;
+    }
+    engine.setValue("[QuickEffectRack1_[Channel" + deck + "]]", "super1", 0.5);
+    for (var stem = 1; stem <= 4; stem++) {
+        var rack = "[QuickEffectRack1_" + PioneerDDJFLX10._stemGroup(deck, stem) + "]";
+        engine.setValue(rack, "super1", selected.indexOf(stem) >= 0 ? position : 0.5);
+    }
+    return true;
 };
