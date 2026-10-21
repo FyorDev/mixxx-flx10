@@ -16,7 +16,7 @@ controller needs. It merges the work of several people, see
 | Linux setup | `res/controllers/flx10-autounlock/` | settings/unlock (`flx10_setup.py`), DJ logo upload, udev + systemd |
 | Nix | `flake.nix` | `packages.mixxx-flx10`, `packages.flx10-setup`, `nixosModules.flx10` |
 
-Coverage: 1459 of the 1571 MIDI-IN messages in Pioneer's DDJ-FLX10 MIDI
+Coverage: 1479 of the 1571 MIDI-IN messages in Pioneer's DDJ-FLX10 MIDI
 message list are mapped.
 
 ## Install
@@ -74,8 +74,14 @@ Install Pioneer's driver; it does the unlock. The mappings work the same.
 - PAD FX uses effect units 3 and 4 and loop rolls; Pioneer's own effect
   algorithms are not available.
 - Memory cues are stored as hot cues 17-36.
-- Not mapped yet: MIX POINT LINK / SELECT, mic EQ and sampler volume/cue
-  messages (mostly analogue on the unit), DMX.
+- FX PART SELECT applies the Sound Color FX knob to the selected stem parts
+  (through each stem's Quick Effect). Beat FX always acts on the whole deck.
+- MIX POINT LINK works as in rekordbox (setting "MIX POINT LINK button");
+  choose "Key Lock (Serato)" there if you want the button as key lock, the
+  FLX10 has no other key lock button. The jog screens do not show the mix
+  point yet.
+- Not mapped yet: mic EQ and sampler volume/cue messages (analogue on the
+  unit), DMX.
 
 ## Testing without hardware
 
