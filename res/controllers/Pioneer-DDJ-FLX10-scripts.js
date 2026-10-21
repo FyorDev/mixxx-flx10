@@ -267,6 +267,7 @@ PioneerDDJFLX10.init = function(id) {
     // Performance pads (all modes, both pages, colours): Pioneer-DDJ-FLX10-pads.js
     PioneerDDJFLX10Pads.init();
     PioneerDDJFLX10MixPoint.init();
+    PioneerDDJFLX10Extras.init();
 
     // Loop in/out button LEDs (blink while setting/adjusting, solid when active)
     PioneerDDJFLX10._initLoopLeds();
@@ -416,6 +417,7 @@ PioneerDDJFLX10.shutdown = function() {
     }
     PioneerDDJFLX10Pads.shutdown();
     PioneerDDJFLX10MixPoint.shutdown();
+    PioneerDDJFLX10Extras.shutdown();
     if (typeof PioneerDDJFLX10.screen !== "undefined") {
         PioneerDDJFLX10.screen.stop();
     }
@@ -1594,20 +1596,18 @@ PioneerDDJFLX10.syncLeaderToggle = function(channel, control, value, status, gro
     engine.setValue(group, "sync_leader", isLeader ? 0 : 1);
 };
 
-PioneerDDJFLX10._beatJumpAccum = {1: 0, 2: 0, 3: 0, 4: 0};
-var BEATJUMP_JOG_THRESHOLD = 24;
+// 4 BEAT JUMP < / > held + jog (CC 0x29): fast search in the turn direction.
+var JOG_FAST_SEARCH_SECONDS_PER_TICK = 0.05;
 
 PioneerDDJFLX10.jogBeatJump = function(channel, control, value, status, group) {
-    var deck = PioneerDDJFLX10._getDeckFromGroup(group);
-    var accum = PioneerDDJFLX10._beatJumpAccum[deck] + (value - 64);
-    if (accum >= BEATJUMP_JOG_THRESHOLD) {
-        script.triggerControl(group, "beatjump_forward");
-        accum = 0;
-    } else if (accum <= -BEATJUMP_JOG_THRESHOLD) {
-        script.triggerControl(group, "beatjump_backward");
-        accum = 0;
+    var samples = engine.getValue(group, "track_samples");
+    var rate = engine.getValue(group, "track_samplerate") || 44100;
+    if (!(samples > 0)) {
+        return;
     }
-    PioneerDDJFLX10._beatJumpAccum[deck] = accum;
+    var delta = (value - 64) * JOG_FAST_SEARCH_SECONDS_PER_TICK * rate * 2 / samples;
+    var pos = engine.getValue(group, "playposition") + delta;
+    engine.setValue(group, "playposition", Math.max(0, Math.min(1, pos)));
 };
 
 // Jog display indicators from the "MIDI-OUT jog display" table of the
