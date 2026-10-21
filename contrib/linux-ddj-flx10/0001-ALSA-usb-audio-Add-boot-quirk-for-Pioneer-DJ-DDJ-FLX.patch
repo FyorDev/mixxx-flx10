@@ -1,0 +1,79 @@
+From 4bc19587179a7af794f32abbf7ab5829d7b23f5d Mon Sep 17 00:00:00 2001
+From: FyorDev <uuf@fyor.nl>
+Date: Wed, 21 Oct 2026 15:29:01 +0200
+Subject: [PATCH] ALSA: usb-audio: Add boot quirk for Pioneer DJ DDJ-FLX10
+
+The DDJ-FLX10 (2b73:0041) answers the UAC2 clock source rate query with
+no valid sample rates, so no PCM streams are created, until it has
+received the controller settings that the vendor's setup utility and
+rekordbox write at connect time (vendor request 3 to the device,
+wValue = setting << 8, wIndex = selector). Send the same seven settings,
+with the values rekordbox uses, from a boot quirk.
+
+The request layout was decoded by Victor Pineda and Lougazi from USB
+captures and matches Gino Messmer's reimplementation of the setup
+utility. Not yet tested on hardware.
+---
+ sound/usb/quirks.c | 39 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 39 insertions(+)
+
+diff --git a/sound/usb/quirks.c b/sound/usb/quirks.c
+index a54fabc..65f6d9b 100644
+--- a/sound/usb/quirks.c
++++ b/sound/usb/quirks.c
+@@ -1626,6 +1626,42 @@ int snd_usb_apply_interface_quirk(struct snd_usb_audio *chip,
+ 	return 0;
+ }
+ 
++/*
++ * Pioneer DJ DDJ-FLX10: the unit reports no valid sample rates and its jog
++ * screens ignore the host until it has received the settings that the
++ * vendor's "DDJ-FLX10 Setup" utility and rekordbox send at connect:
++ * vendor request 3, wValue = value << 8, wIndex = setting selector.
++ * The values are the ones rekordbox sends (slip flashing on, slip LED lit,
++ * fader start off, jog ring colour 1, time mode remaining, REC OUT with
++ * mic, virtual deck mode on).
++ */
++static int snd_usb_pioneer_ddj_flx10_boot_quirk(struct usb_device *dev)
++{
++	static const struct {
++		u16 value;
++		u16 index;
++	} settings[] = {
++		{ 0x0100, 0xc028 },	/* slip mode flashing */
++		{ 0x0000, 0xc029 },	/* slip button LED */
++		{ 0x0200, 0xc013 },	/* fader start sync */
++		{ 0x0000, 0xc02b },	/* jog ring colour */
++		{ 0x0100, 0xc026 },	/* time mode */
++		{ 0x0000, 0xc01d },	/* REC OUT */
++		{ 0x0100, 0xc027 },	/* virtual deck mode */
++	};
++	int i, err;
++
++	for (i = 0; i < ARRAY_SIZE(settings); i++) {
++		err = snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0), 3,
++				      USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
++				      settings[i].value, settings[i].index,
++				      NULL, 0);
++		if (err < 0)
++			return err;
++	}
++	return 0;
++}
++
+ int snd_usb_apply_boot_quirk(struct usb_device *dev,
+ 			     struct usb_interface *intf,
+ 			     const struct snd_usb_audio_quirk *quirk,
+@@ -1650,6 +1686,9 @@ int snd_usb_apply_boot_quirk(struct usb_device *dev,
+ 	case USB_ID(0x0ccd, 0x00b1): /* Terratec Aureon 7.1 USB */
+ 		return snd_usb_cm6206_boot_quirk(dev);
+ 
++	case USB_ID(0x2b73, 0x0041):
++		/* Pioneer DJ DDJ-FLX10 */
++		return snd_usb_pioneer_ddj_flx10_boot_quirk(dev);
+ 	case USB_ID(0x0dba, 0x3000):
+ 		/* Digidesign Mbox 2 */
+ 		return snd_usb_mbox2_boot_quirk(dev);
+-- 
+2.55.0
+
