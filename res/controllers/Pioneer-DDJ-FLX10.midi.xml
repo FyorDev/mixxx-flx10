@@ -5,9 +5,23 @@
         <author>Marc Zischka &amp; Victor Pineda (Veezuhz)</author>
         <description>Pioneer DDJ-FLX10 Mapping v1.1 (Mixxx 2.5 — MIDI controls only, no waveform)</description>
     </info>
+    <settings>
+        <option variable="jogScreenMode" type="enum" label="Jog screen mode">
+            <description>
+                MIDI: BPM, time and position marker over MIDI channel 16, works
+                without extra setup. Serato HID: waveforms and artwork on the jog
+                screens; also enable the "DDJ-FLX10 Screen" HID mapping and run
+                the FLX10 unlock (res/controllers/flx10-autounlock) on Linux.
+            </description>
+            <value label="MIDI (text only)" default="true">midi</value>
+            <value label="Serato HID (waveform)">serato</value>
+            <value label="rekordbox HID (experimental, not rendering yet)">rekordbox</value>
+        </option>
+    </settings>
     <controller id="DDJ-FLX10">
         <scriptfiles>
             <file filename="Pioneer-DDJ-FLX10-scripts.js" functionprefix="PioneerDDJFLX10"/>
+            <file filename="Pioneer-DDJ-FLX10-screen-sysex.js" functionprefix=""/>
         </scriptfiles>
         <controls>
             <control>

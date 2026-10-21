@@ -178,3 +178,110 @@ PioneerDDJFLX10._sendBeatgridBurst = function(deck) {
         midi.sendSysexMsg(msg, msg.length);
     }
 };
+
+PioneerDDJFLX10.startScreenHandshake = function(mode) {
+    PioneerDDJFLX10._SCREEN_MODE = mode;
+    try {
+        if (PioneerDDJFLX10._SCREEN_MODE === 'vdj') {
+            // VDJ MODE INIT — order from flx10-vdj-init capture (t=6.367-6.629).
+            // All 7 SysEx commands in ~0.3 seconds, no per-deck SysEx.
+            console.log("FLX10: initializing in VDJ mode (xx 21 + RGB-waveform)");
+            for (var vi = 0; vi < PioneerDDJFLX10._SYSEX_VDJ_INIT.length; vi++) {
+                var msg = PioneerDDJFLX10._SYSEX_VDJ_INIT[vi];
+                midi.sendSysexMsg(msg, msg.length);
+            }
+            // 200ms keepalive timer (same VDJ keepalive 50 00)
+            PioneerDDJFLX10._sysexKeepaliveTimer = engine.beginTimer(200, function() {
+                midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_VDJ_KEEPALIVE,
+                                  PioneerDDJFLX10._SYSEX_VDJ_KEEPALIVE.length);
+            });
+            console.log("FLX10: VDJ-mode init complete (" +
+                        PioneerDDJFLX10._SYSEX_VDJ_INIT.length + " SysEx sent)");
+        } else if (PioneerDDJFLX10._SCREEN_MODE === 'rekordbox') {
+            // REKORDBOX MODE INIT — order verified from flx10-rekordbox-opening.
+            // Rekordbox sends in two phases:
+            //   EARLY (t≈28s in capture): keepalive variant + 4 per-deck init
+            //   LATE  (t≈52s in capture, ~20s after init packets): Global B,
+            //         Global C, long mode-config, ENTER_HID
+            // We split here too. Daemon's HID init packets (xx 30/39/2d/3e/2c/2e/2f)
+            // fire when daemon starts; the LATE SysEx is deferred so the firmware
+            // sees init-packets BEFORE the final mode-enable handshake.
+            console.log("FLX10: initializing in REKORDBOX mode (xx 21 + xx 3D)");
+            midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_RKBOX_KEEPALIVE,
+                              PioneerDDJFLX10._SYSEX_RKBOX_KEEPALIVE.length);
+            for (var rd = 1; rd <= 4; rd++) {
+                midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_RKBOX_DECK_INIT[rd],
+                                  PioneerDDJFLX10._SYSEX_RKBOX_DECK_INIT[rd].length);
+            }
+            console.log("FLX10: rekordbox EARLY SysEx sent; LATE SysEx deferred 5s");
+            // Use the rekordbox-variant keepalive (50 00) every 200ms.
+            PioneerDDJFLX10._sysexKeepaliveTimer = engine.beginTimer(200, function() {
+                midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_RKBOX_KEEPALIVE,
+                                  PioneerDDJFLX10._SYSEX_RKBOX_KEEPALIVE.length);
+            });
+            // Defer LATE SysEx by 5s so daemon's init packets land first.
+            engine.beginTimer(5000, function() {
+                midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_RKBOX_GLOBAL_B,
+                                  PioneerDDJFLX10._SYSEX_RKBOX_GLOBAL_B.length);
+                midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_RKBOX_GLOBAL_C,
+                                  PioneerDDJFLX10._SYSEX_RKBOX_GLOBAL_C.length);
+                midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_RKBOX_MODE_CONFIG,
+                                  PioneerDDJFLX10._SYSEX_RKBOX_MODE_CONFIG.length);
+                midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_ENTER_HID,
+                                  PioneerDDJFLX10._SYSEX_ENTER_HID.length);
+                console.log("FLX10: rekordbox LATE SysEx sent (mode-enable handshake)");
+            }, true);   // one-shot
+        } else {
+        // SESSION_START fires FIRST (before ENTER_HID), mirroring Serato's
+        // captured order at t=25.242 (session-start) vs t=26.482 (ENTER_HID).
+        midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_SESSION_START,
+                          PioneerDDJFLX10._SYSEX_SESSION_START.length);
+        midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_ENTER_HID,
+                          PioneerDDJFLX10._SYSEX_ENTER_HID.length);
+        // 2026-05-25 TEST: keepalive rate 200ms → 340ms (matching Serato's
+        // measured ~3 Hz / 340ms interval from smoothplaying capture).
+        // Hypothesis: too-fast keepalive might confuse firmware into a slow
+        // refresh mode. Serato sends f0 00 40 04 05 00 00 04 04 01 00 07 50 31 f7
+        // at exactly this rate during steady play.
+        PioneerDDJFLX10._sysexKeepaliveTimer = engine.beginTimer(340, function() {
+            midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_KEEPALIVE,
+                              PioneerDDJFLX10._SYSEX_KEEPALIVE.length);
+        });
+        console.log("FLX10: HID screen SysEx handshake started");
+    
+        // EXPERIMENT 2026-05-24: send per-deck init SysEx that Serato sends.
+        // Hypothesis: this puts firmware into "Serato mode" where time is
+        // computed internally → would let us scroll the wave AND have
+        // accurate time. (Without these, the firmware uses HID xx 27 [5..7]
+        // position bytes for both wave scroll AND time computation, which
+        // means we have to pick one.)
+        for (var sd = 1; sd <= 4; sd++) {
+            midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_DECK_INIT[sd],
+                              PioneerDDJFLX10._SYSEX_DECK_INIT[sd].length);
+        }
+        midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_GLOBAL_B,
+                          PioneerDDJFLX10._SYSEX_GLOBAL_B.length);
+        midi.sendSysexMsg(PioneerDDJFLX10._SYSEX_GLOBAL_C,
+                          PioneerDDJFLX10._SYSEX_GLOBAL_C.length);
+        console.log("FLX10: Serato-mode per-deck SysEx sent (experimental)");
+    
+        // Send the beat-grid burst (7 02 0F messages from Serato capture)
+        // for each loaded deck. Experiment 2026-05-24: tests whether these
+        // are the trigger that makes firmware honor [9..12] time bytes when
+        // [5..7] position is also non-zero.
+        for (var bd = 1; bd <= 4; bd++) {
+            PioneerDDJFLX10._sendBeatgridBurst(bd);
+        }
+        console.log("FLX10: beat-grid burst sent for all decks (experimental)");
+        }   // end else (Serato mode)
+    } catch (e) {
+        console.log("FLX10: SysEx handshake failed (screen waveform won't render): " + e);
+    }
+};
+
+PioneerDDJFLX10.stopScreenHandshake = function() {
+    if (PioneerDDJFLX10._sysexKeepaliveTimer !== null) {
+        engine.stopTimer(PioneerDDJFLX10._sysexKeepaliveTimer);
+        PioneerDDJFLX10._sysexKeepaliveTimer = null;
+    }
+};

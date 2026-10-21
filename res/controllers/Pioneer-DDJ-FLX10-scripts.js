@@ -204,6 +204,10 @@ PioneerDDJFLX10._refreshOutputLeds = function() {
 PioneerDDJFLX10.init = function(id) {
     console.log("Pioneer DDJ-FLX10 PROD - Initialisation");
     var initTimeMode = engine.getValue("[Controls]", "ShowDurationRemaining") !== 0 ? 0x7F : 0x00;
+    // The firmware draws the channel 16 jog fields and the HID screen data on
+    // the same display elements, so only one of the two may drive them.
+    var screenMode = engine.getSetting("jogScreenMode") || "midi";
+    var midiJogDisplay = (screenMode === "midi");
     // Plage de pitch par défaut (±16%)
     for (var i = 1; i <= 4; i++) {
         var grp = "[Channel" + i + "]";
@@ -223,6 +227,11 @@ PioneerDDJFLX10.init = function(id) {
         engine.makeConnection(grp, "vu_meter", PioneerDDJFLX10["LedVuMeterCH" + i]);
         // Force off au démarrage pour éviter LEDs fantômes
         midi.sendShortMsg(0xB0 + (i - 1), 0x02, 0x00);
+        // Seed duration cache so jogTime works immediately at init
+        PioneerDDJFLX10._trackDuration[i] = engine.getValue(grp, "duration");
+        if (!midiJogDisplay) {
+            continue;
+        }
         // Jog display: enable visibility, set time mode, then connect data callbacks
         midi.sendShortMsg(JOG_DISPLAY_NOTE, 0x5C + i, 0x00);
         midi.sendShortMsg(JOG_DISPLAY_NOTE, _JOG_TIME_MODE[i - 1], initTimeMode);
@@ -230,8 +239,6 @@ PioneerDDJFLX10.init = function(id) {
         engine.makeConnection(grp, "bpm",          PioneerDDJFLX10.jogBpm);
         engine.makeConnection(grp, "rate",         PioneerDDJFLX10.jogSpeed);
         engine.makeConnection(grp, "duration",     PioneerDDJFLX10.jogDuration);
-        // Seed duration cache so jogTime works immediately at init
-        PioneerDDJFLX10._trackDuration[i] = engine.getValue(grp, "duration");
         // Push initial values so displays start at correct state, not hardware defaults
         PioneerDDJFLX10.jogMarker(engine.getValue(grp, "playposition"), grp, "playposition");
         PioneerDDJFLX10.jogBpm(engine.getValue(grp, "bpm"), grp, "bpm");
@@ -242,6 +249,9 @@ PioneerDDJFLX10.init = function(id) {
     // Using a timer rather than a playposition callback because Mixxx throttles
     // high-frequency CO callbacks on some builds and the timer is unconditional.
     engine.beginTimer(250, function() {
+        if (!midiJogDisplay) {
+            return;
+        }
         var showRemaining = engine.getValue("[Controls]", "ShowDurationRemaining") !== 0;
         for (var d = 1; d <= 4; d++) {
             var duration = PioneerDDJFLX10._trackDuration[d];
@@ -260,6 +270,10 @@ PioneerDDJFLX10.init = function(id) {
 
     // LEDs Play/Cue avancées (Pioneer-like)
     PioneerDDJFLX10._initAdvancedLeds();
+
+    if (!midiJogDisplay && typeof PioneerDDJFLX10.startScreenHandshake === "function") {
+        PioneerDDJFLX10.startScreenHandshake(screenMode);
+    }
 
     // Hot-cue pad RGB LEDs (color-matched to Mixxx hot-cue colors, blink on loops)
     PioneerDDJFLX10._initHotcueLeds();
@@ -408,6 +422,9 @@ PioneerDDJFLX10.keySyncToggle = function(channel, control, value, status, group)
 // Shutdown
 PioneerDDJFLX10.shutdown = function() {
     console.log("Pioneer DDJ-FLX10 PROD - Arrêt");
+    if (typeof PioneerDDJFLX10.stopScreenHandshake === "function") {
+        PioneerDDJFLX10.stopScreenHandshake();
+    }
     if (typeof PioneerDDJFLX10.screen !== "undefined") {
         PioneerDDJFLX10.screen.stop();
     }
