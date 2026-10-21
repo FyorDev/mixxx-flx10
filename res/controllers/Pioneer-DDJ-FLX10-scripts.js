@@ -169,12 +169,6 @@ PioneerDDJFLX10._refreshOutputLeds = function() {
             midi.sendShortMsg(status, led.note,
                 engine.getValue(group, led.key) > 0.5 ? 0x7F : 0x00);
         }
-        // Re-render hot-cue pad LEDs (same startup-timing vulnerability).
-        if (PioneerDDJFLX10._hotcue && PioneerDDJFLX10._hotcue[deck]) {
-            for (var pad = 1; pad <= 8; pad++) {
-                PioneerDDJFLX10._renderHotcue(deck, pad);
-            }
-        }
         // Re-render loop in/out button LEDs.
         if (PioneerDDJFLX10._renderLoopLeds) {
             PioneerDDJFLX10._renderLoopLeds(deck);
@@ -190,12 +184,6 @@ PioneerDDJFLX10._refreshOutputLeds = function() {
     if (PioneerDDJFLX10._renderMasterEqKillLed) {
         for (var mi = 0; mi < 3; mi++) {
             PioneerDDJFLX10._renderMasterEqKillLed(mi);
-        }
-    }
-    // Sampler pad LEDs (once — Sampler1-8).
-    if (PioneerDDJFLX10._renderSamplerLed) {
-        for (var sn = 1; sn <= 8; sn++) {
-            PioneerDDJFLX10._renderSamplerLed(sn);
         }
     }
 };
@@ -244,6 +232,7 @@ PioneerDDJFLX10.init = function(id) {
         PioneerDDJFLX10.jogBpm(engine.getValue(grp, "bpm"), grp, "bpm");
         PioneerDDJFLX10.jogSpeed(engine.getValue(grp, "rate"), grp, "rate");
         PioneerDDJFLX10.jogTime(engine.getValue(grp, "playposition"), grp, "playposition");
+        PioneerDDJFLX10._initJogIndicators(grp);
     }
     // Poll all four decks every 250 ms and push time to jog displays.
     // Using a timer rather than a playposition callback because Mixxx throttles
@@ -275,20 +264,19 @@ PioneerDDJFLX10.init = function(id) {
         PioneerDDJFLX10.startScreenHandshake(screenMode);
     }
 
-    // Hot-cue pad RGB LEDs (color-matched to Mixxx hot-cue colors, blink on loops)
-    PioneerDDJFLX10._initHotcueLeds();
+    // Performance pads (all modes, both pages, colours): Pioneer-DDJ-FLX10-pads.js
+    PioneerDDJFLX10Pads.init();
 
     // Loop in/out button LEDs (blink while setting/adjusting, solid when active)
     PioneerDDJFLX10._initLoopLeds();
 
     // EQ kill switches on the repurposed STEM buttons (lit = band on)
     PioneerDDJFLX10._initEqKillLeds();
+    PioneerDDJFLX10._initPartLeds();
 
     // Master EQ kills (master stem buttons → kill a band on all decks)
     PioneerDDJFLX10._initMasterEqKillLeds();
 
-    // Sampler pad LEDs (lit when a sampler is loaded, blink while playing)
-    PioneerDDJFLX10._initSamplerLeds();
 
     // Re-push LED state once the controller is ready to receive — the FLX10
     // misses Mixxx's initial output burst at launch (see _refreshOutputLeds).
@@ -425,6 +413,7 @@ PioneerDDJFLX10.shutdown = function() {
     if (typeof PioneerDDJFLX10.stopScreenHandshake === "function") {
         PioneerDDJFLX10.stopScreenHandshake();
     }
+    PioneerDDJFLX10Pads.shutdown();
     if (typeof PioneerDDJFLX10.screen !== "undefined") {
         PioneerDDJFLX10.screen.stop();
     }
@@ -1410,6 +1399,10 @@ PioneerDDJFLX10._eqGroup = function(deck) {
     return "[EqualizerRack1_[Channel" + deck + "]_Effect1]";
 };
 PioneerDDJFLX10._renderEqKillLed = function(deck, idx) {
+    if (PioneerDDJFLX10._hasStems(deck)) {
+        PioneerDDJFLX10._renderPartLed(deck, idx);
+        return;
+    }
     var killed = engine.getValue(PioneerDDJFLX10._eqGroup(deck),
                                  PioneerDDJFLX10._EQ_KILL[idx].param) > 0;
     midi.sendShortMsg(0x90 + (deck - 1), PioneerDDJFLX10._EQ_KILL[idx].note,
@@ -1583,3 +1576,191 @@ PioneerDDJFLX10._initLoopLeds = function() {
 
 // Function to expand playlists folder (currently disabled)
 // This feature requires a different approach that will be implemented later
+
+// BEAT SYNC long press. Writing 1 to sync_leader requests explicit leader,
+// 2 means this deck already is the explicit leader.
+PioneerDDJFLX10.syncLeaderToggle = function(channel, control, value, status, group) {
+    if (value === 0) {
+        return;
+    }
+    var isLeader = engine.getValue(group, "sync_leader") === 2;
+    engine.setValue(group, "sync_leader", isLeader ? 0 : 1);
+};
+
+PioneerDDJFLX10._beatJumpAccum = {1: 0, 2: 0, 3: 0, 4: 0};
+var BEATJUMP_JOG_THRESHOLD = 24;
+
+PioneerDDJFLX10.jogBeatJump = function(channel, control, value, status, group) {
+    var deck = PioneerDDJFLX10._getDeckFromGroup(group);
+    var accum = PioneerDDJFLX10._beatJumpAccum[deck] + (value - 64);
+    if (accum >= BEATJUMP_JOG_THRESHOLD) {
+        script.triggerControl(group, "beatjump_forward");
+        accum = 0;
+    } else if (accum <= -BEATJUMP_JOG_THRESHOLD) {
+        script.triggerControl(group, "beatjump_backward");
+        accum = 0;
+    }
+    PioneerDDJFLX10._beatJumpAccum[deck] = accum;
+};
+
+// Jog display indicators from the "MIDI-OUT jog display" table of the
+// DDJ-FLX10 MIDI message list: MASTER, SYNC and master tempo icons, cue
+// point needle, key and key change amount.
+var _JOG_MASTER_NOTE    = [0x18, 0x19, 0x1A, 0x1B];
+var _JOG_SYNC_NOTE      = [0x1C, 0x1D, 0x1E, 0x1F];
+var _JOG_KEYLOCK_NOTE   = [0x20, 0x21, 0x22, 0x23];
+var _JOG_CUE_MSB        = [0x1C, 0x1D, 0x1E, 0x1F];
+var _JOG_CUE_LSB        = [0x3C, 0x3D, 0x3E, 0x3F];
+var JOG_KEY_CC          = 0x49;
+var JOG_KEY_CHANGE_CC   = 0x4A;
+
+// Mixxx ChromaticKey 1-24 to the Pioneer key code 0x01-0x18.
+PioneerDDJFLX10.PIONEER_KEY_FROM_MIXXX = {
+    1: 0x01,  2: 0x03,  3: 0x05,  4: 0x07,  5: 0x09,  6: 0x0B,
+    7: 0x0D,  8: 0x0F,  9: 0x11, 10: 0x13, 11: 0x15, 12: 0x17,
+    13: 0x08, 14: 0x0A, 15: 0x0C, 16: 0x0E, 17: 0x10, 18: 0x12,
+    19: 0x14, 20: 0x16, 21: 0x18, 22: 0x02, 23: 0x04, 24: 0x06
+};
+
+PioneerDDJFLX10._jogNote = function(notes, group, on) {
+    var i = PioneerDDJFLX10._getDeckFromGroup(group) - 1;
+    midi.sendShortMsg(JOG_DISPLAY_NOTE, notes[i], on ? 0x7F : 0x00);
+};
+
+PioneerDDJFLX10.jogSyncLeader = function(value, group) {
+    PioneerDDJFLX10._jogNote(_JOG_MASTER_NOTE, group, value > 0);
+};
+
+PioneerDDJFLX10.jogSyncEnabled = function(value, group) {
+    PioneerDDJFLX10._jogNote(_JOG_SYNC_NOTE, group, value > 0);
+};
+
+PioneerDDJFLX10.jogKeylock = function(value, group) {
+    PioneerDDJFLX10._jogNote(_JOG_KEYLOCK_NOTE, group, value > 0);
+};
+
+PioneerDDJFLX10.jogCuePoint = function(value, group) {
+    var i = PioneerDDJFLX10._getDeckFromGroup(group) - 1;
+    var cue = engine.getValue(group, "cue_point");
+    var samples = engine.getValue(group, "track_samples");
+    if (cue < 0 || !(samples > 0)) {
+        midi.sendShortMsg(JOG_DISPLAY_CC, _JOG_CUE_MSB[i], 0x7F);
+        midi.sendShortMsg(JOG_DISPLAY_CC, _JOG_CUE_LSB[i], 0x7F);
+        return;
+    }
+    var deg = Math.max(0, Math.min(359, Math.round(cue / samples * 359)));
+    PioneerDDJFLX10._jogSend14(_JOG_CUE_MSB[i], _JOG_CUE_LSB[i], deg);
+};
+
+PioneerDDJFLX10.jogKey = function(value, group) {
+    var d = PioneerDDJFLX10._getDeckFromGroup(group) - 1;
+    var key = Math.round(engine.getValue(group, "key"));
+    midi.sendShortMsg(0xB0 + d, JOG_KEY_CC, PioneerDDJFLX10.PIONEER_KEY_FROM_MIXXX[key] || 0x00);
+    // 0x01-0x0C = -12..-1 semitones, 0x0D = 0, up to 0x19 = +12.
+    var shift = Math.round(engine.getValue(group, "pitch_adjust"));
+    shift = Math.max(-12, Math.min(12, shift));
+    midi.sendShortMsg(0xB0 + d, JOG_KEY_CHANGE_CC, 0x0D + shift);
+};
+
+PioneerDDJFLX10._initJogIndicators = function(group) {
+    var links = [
+        ["sync_leader", PioneerDDJFLX10.jogSyncLeader],
+        ["sync_enabled", PioneerDDJFLX10.jogSyncEnabled],
+        ["keylock", PioneerDDJFLX10.jogKeylock],
+        ["cue_point", PioneerDDJFLX10.jogCuePoint],
+        ["track_samples", PioneerDDJFLX10.jogCuePoint],
+        ["key", PioneerDDJFLX10.jogKey],
+        ["pitch_adjust", PioneerDDJFLX10.jogKey],
+    ];
+    for (var k = 0; k < links.length; k++) {
+        engine.makeConnection(group, links[k][0], links[k][1]);
+        links[k][1](engine.getValue(group, links[k][0]), group);
+    }
+};
+
+// ACTIVE PART (STEMS) buttons. With a stem file loaded they mute/unmute the
+// part like rekordbox does; without stems they keep working as EQ kills.
+// Mixxx stem order follows the NI stem format: 1 drums, 2 bass, 3 other,
+// 4 vocals. The FLX10's INST part is bass + other.
+PioneerDDJFLX10._PART_STEMS = {0x0D: [1], 0x0E: [4], 0x0F: [2, 3]};
+PioneerDDJFLX10._PART_NOTES = [0x0D, 0x0E, 0x0F];
+PioneerDDJFLX10._SOLO_BASE = {0x24: 0x0D, 0x28: 0x0E, 0x2C: 0x0F};
+
+PioneerDDJFLX10._hasStems = function(deck) {
+    return engine.getValue("[Channel" + deck + "]", "stem_count") >= 4;
+};
+
+PioneerDDJFLX10._stemGroup = function(deck, stem) {
+    return "[Channel" + deck + "_Stem" + stem + "]";
+};
+
+PioneerDDJFLX10._partMuted = function(deck, note) {
+    var stems = PioneerDDJFLX10._PART_STEMS[note];
+    for (var i = 0; i < stems.length; i++) {
+        if (!engine.getValue(PioneerDDJFLX10._stemGroup(deck, stems[i]), "mute")) {
+            return false;
+        }
+    }
+    return true;
+};
+
+PioneerDDJFLX10._setPartMuted = function(deck, note, muted) {
+    var stems = PioneerDDJFLX10._PART_STEMS[note];
+    for (var i = 0; i < stems.length; i++) {
+        engine.setValue(PioneerDDJFLX10._stemGroup(deck, stems[i]), "mute", muted ? 1 : 0);
+    }
+};
+
+PioneerDDJFLX10._renderPartLed = function(deck, idx) {
+    var note = PioneerDDJFLX10._PART_NOTES[idx];
+    midi.sendShortMsg(0x90 + (deck - 1), note,
+        PioneerDDJFLX10._partMuted(deck, note) ? 0x00 : 0x7F);
+};
+
+PioneerDDJFLX10._renderPartLeds = function(deck) {
+    for (var idx = 0; idx < PioneerDDJFLX10._PART_NOTES.length; idx++) {
+        PioneerDDJFLX10._renderEqKillLed(deck, idx);
+    }
+};
+
+PioneerDDJFLX10.activePart = function(channel, control, value, status, group) {
+    var deck = PioneerDDJFLX10._getDeckFromGroup(group);
+    if (!PioneerDDJFLX10._hasStems(deck)) {
+        PioneerDDJFLX10.eqKill(channel, control, value, status, group);
+        return;
+    }
+    if (value === 0) {
+        return;
+    }
+    PioneerDDJFLX10._setPartMuted(deck, control, !PioneerDDJFLX10._partMuted(deck, control));
+};
+
+PioneerDDJFLX10.activePartSolo = function(channel, control, value, status, group) {
+    if (value === 0) {
+        return;
+    }
+    var note = PioneerDDJFLX10._SOLO_BASE[control & 0xFC];
+    var deck = (control & 0x03) + 1;
+    if (note === undefined || !PioneerDDJFLX10._hasStems(deck)) {
+        return;
+    }
+    for (var i = 0; i < PioneerDDJFLX10._PART_NOTES.length; i++) {
+        var n = PioneerDDJFLX10._PART_NOTES[i];
+        PioneerDDJFLX10._setPartMuted(deck, n, n !== note);
+    }
+};
+
+PioneerDDJFLX10._initPartLeds = function() {
+    for (var deck = 1; deck <= 4; deck++) {
+        (function(d) {
+            var refresh = function() {
+                PioneerDDJFLX10._renderPartLeds(d);
+            };
+            engine.makeConnection("[Channel" + d + "]", "stem_count", refresh);
+            for (var stem = 1; stem <= 4; stem++) {
+                engine.makeConnection(PioneerDDJFLX10._stemGroup(d, stem), "mute", refresh);
+            }
+            refresh();
+        })(deck);
+    }
+};
