@@ -1494,7 +1494,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.memCueSave</key>
+                <key>PioneerDDJFLX10Pads.memory</key>
                 <description>Save mem cue CH1 (Shift+Left)</description>
                 <status>0x90</status>
                 <midino>0x3D</midino>
@@ -1502,7 +1502,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.memCueSave</key>
+                <key>PioneerDDJFLX10Pads.memory</key>
                 <description>Save mem cue CH2 (Shift+Left)</description>
                 <status>0x91</status>
                 <midino>0x3D</midino>
@@ -1510,7 +1510,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.memCueSave</key>
+                <key>PioneerDDJFLX10Pads.memory</key>
                 <description>Save mem cue CH3 (Shift+Left)</description>
                 <status>0x92</status>
                 <midino>0x3D</midino>
@@ -1518,7 +1518,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.memCueSave</key>
+                <key>PioneerDDJFLX10Pads.memory</key>
                 <description>Save mem cue CH4 (Shift+Left)</description>
                 <status>0x93</status>
                 <midino>0x3D</midino>
@@ -1526,7 +1526,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.memCuePrev</key>
+                <key>PioneerDDJFLX10Pads.cueCallBack</key>
                 <description>Prev mem cue CH1</description>
                 <status>0x90</status>
                 <midino>0x51</midino>
@@ -1534,7 +1534,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.memCuePrev</key>
+                <key>PioneerDDJFLX10Pads.cueCallBack</key>
                 <description>Prev mem cue CH2</description>
                 <status>0x91</status>
                 <midino>0x51</midino>
@@ -1542,7 +1542,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.memCuePrev</key>
+                <key>PioneerDDJFLX10Pads.cueCallBack</key>
                 <description>Prev mem cue CH3</description>
                 <status>0x92</status>
                 <midino>0x51</midino>
@@ -1550,7 +1550,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.memCuePrev</key>
+                <key>PioneerDDJFLX10Pads.cueCallBack</key>
                 <description>Prev mem cue CH4</description>
                 <status>0x93</status>
                 <midino>0x51</midino>
@@ -1558,7 +1558,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.memCueNext</key>
+                <key>PioneerDDJFLX10Pads.cueCallForward</key>
                 <description>Next mem cue CH1</description>
                 <status>0x90</status>
                 <midino>0x53</midino>
@@ -1566,7 +1566,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.memCueNext</key>
+                <key>PioneerDDJFLX10Pads.cueCallForward</key>
                 <description>Next mem cue CH2</description>
                 <status>0x91</status>
                 <midino>0x53</midino>
@@ -1574,7 +1574,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.memCueNext</key>
+                <key>PioneerDDJFLX10Pads.cueCallForward</key>
                 <description>Next mem cue CH3</description>
                 <status>0x92</status>
                 <midino>0x53</midino>
@@ -1582,7 +1582,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.memCueNext</key>
+                <key>PioneerDDJFLX10Pads.cueCallForward</key>
                 <description>Next mem cue CH4</description>
                 <status>0x93</status>
                 <midino>0x53</midino>
@@ -1590,7 +1590,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.memCueDelete</key>
+                <key>PioneerDDJFLX10Pads.memoryDelete</key>
                 <description>Delete nearest mem cue CH1 (Shift+Right)</description>
                 <status>0x90</status>
                 <midino>0x3E</midino>
@@ -1600,7 +1600,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.memCueDelete</key>
+                <key>PioneerDDJFLX10Pads.memoryDelete</key>
                 <description>Delete nearest mem cue CH2 (Shift+Right)</description>
                 <status>0x91</status>
                 <midino>0x3E</midino>
@@ -1610,7 +1610,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.memCueDelete</key>
+                <key>PioneerDDJFLX10Pads.memoryDelete</key>
                 <description>Delete nearest mem cue CH3 (Shift+Right)</description>
                 <status>0x92</status>
                 <midino>0x3E</midino>
@@ -1620,7 +1620,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.memCueDelete</key>
+                <key>PioneerDDJFLX10Pads.memoryDelete</key>
                 <description>Delete nearest mem cue CH4 (Shift+Right)</description>
                 <status>0x93</status>
                 <midino>0x3E</midino>
