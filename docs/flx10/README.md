@@ -16,8 +16,10 @@ controller needs. It merges the work of several people, see
 | Linux setup | `res/controllers/flx10-autounlock/` | settings/unlock (`flx10_setup.py`), DJ logo upload, udev + systemd |
 | Nix | `flake.nix` | `packages.mixxx-flx10`, `packages.flx10-setup`, `nixosModules.flx10` |
 
-Coverage: 1479 of the 1571 MIDI-IN messages in Pioneer's DDJ-FLX10 MIDI
-message list are mapped.
+Coverage: 1434 of the 1571 MIDI-IN messages in Pioneer's DDJ-FLX10 MIDI
+message list are mapped; most of the rest are handled by the unit itself
+(SHIFT + PAGE jog display switching, input selectors, mic section, master
+cue, booth level).
 
 ## Install
 
@@ -64,6 +66,10 @@ Install Pioneer's driver; it does the unlock. The mappings work the same.
    (waveforms).
 3. For waveforms also enable the `DDJ-FLX10 Screen` HID controller with the
    same protocol in its "Jog screen protocol" option.
+4. Other options of the MIDI mapping: "ACTIVE PART buttons" (mute or solo),
+   "Level knobs work in the unit" (on by default: MASTER LEVEL, HEADPHONES
+   LEVEL and HEADPHONES MIX stay analogue and Mixxx's headphone mix is set
+   to cue only), "MIX POINT LINK button" (Mix Point Link or Key Lock).
 
 ## Controls that differ from rekordbox
 
@@ -74,6 +80,11 @@ Install Pioneer's driver; it does the unlock. The mappings work the same.
 - PAD FX uses effect units 3 and 4 and loop rolls; Pioneer's own effect
   algorithms are not available.
 - Memory cues are stored as hot cues 17-36.
+- VIEW held adds the track to Auto DJ (rekordbox: Tag List). BEAT < / >
+  change parameter 1 of the Beat FX effects; Release FX switches the Beat
+  FX off at once.
+- Fader Start messages are only sent when Fader Start is enabled in the
+  unit's settings (`flx10_setup.py settings --fader-start on`).
 - FX PART SELECT applies the Sound Color FX knob to the selected stem parts
   (through each stem's Quick Effect). Beat FX always acts on the whole deck.
 - MIX POINT LINK works as in rekordbox (setting "MIX POINT LINK button");
