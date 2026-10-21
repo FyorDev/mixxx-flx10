@@ -2,8 +2,11 @@
 <MixxxControllerPreset mixxxVersion="" schemaVersion="1">
     <info>
         <name>Pioneer DDJ-FLX10</name>
-        <author>Marc Zischka &amp; Victor Pineda (Veezuhz)</author>
-        <description>Pioneer DDJ-FLX10 Mapping v1.1 (Mixxx 2.5 — MIDI controls only, no waveform)</description>
+        <author>Marc Zischka, Victor Pineda (Veezuhz), Lougazi (Loui1979), Serhii O. Pashchenko, FyorDev</author>
+        <description>Pioneer DDJ-FLX10: all decks, mixer, jog, STEMS, all pad modes and pages, memory cues and the channel 16 jog display. For waveforms on the jog screens also enable the "DDJ-FLX10 Screen" HID mapping. See docs/flx10/README.md.</description>
+        <devices>
+            <product protocol="midi" vendor_id="0x2b73" product_id="0x0041"/>
+        </devices>
     </info>
     <settings>
         <option variable="jogScreenMode" type="enum" label="Jog screen mode">
