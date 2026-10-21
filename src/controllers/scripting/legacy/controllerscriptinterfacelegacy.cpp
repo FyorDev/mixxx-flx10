@@ -1,15 +1,23 @@
 #include "controllerscriptinterfacelegacy.h"
 
+#include <QBuffer>
 #include <QStringEncoder>
 #include <gsl/pointers>
 
 #include "control/controlobject.h"
 #include "control/controlobjectscript.h"
 #include "control/controlpotmeter.h"
+#include "controllers/controller.h"
 #include "controllers/scripting/legacy/controllerscriptenginelegacy.h"
 #include "controllers/scripting/legacy/scriptconnectionjsproxy.h"
+#include "library/coverart.h"
+#include "mixer/basetrackplayer.h"
+#include "mixer/playerinfo.h"
 #include "mixer/playermanager.h"
 #include "moc_controllerscriptinterfacelegacy.cpp"
+#include "track/beats.h"
+#include "track/track.h"
+#include "waveform/waveform.h"
 #include "util/cmdlineargs.h"
 #include "util/fpclassify.h"
 #include "util/make_const_iterator.h"
@@ -26,6 +34,36 @@ constexpr int kScratchTimerMs = 1;
 constexpr double kAlphaBetaDt = kScratchTimerMs / 1000.0;
 // stop ramping at a rate which doesn't produce any audible output anymore
 constexpr double kBrakeRampToRate = 0.01;
+
+// 2026-05-25: per-controller fast-timer allowlist. Default JS-timer minimum
+// is 20ms (= 50 Hz cap, see beginTimer below). Controllers in this list can
+// request shorter intervals (down to the listed minimum) for fine-grained
+// hardware-display animation.
+struct FastTimerEntry {
+    std::uint16_t vendorId;
+    std::uint16_t productId;
+    int minTimerMs;
+};
+constexpr FastTimerEntry kFastTimerAllowlist[] = {
+        {0x2B73, 0x0041, 5},  // Pioneer DDJ-FLX10 (jog-screen animation @ 200 Hz)
+};
+
+int getMinTimerMsForController(const Controller* pController) {
+    if (!pController) {
+        return 20;
+    }
+    auto vid = pController->getVendorId();
+    auto pid = pController->getProductId();
+    if (!vid.has_value() || !pid.has_value()) {
+        return 20;
+    }
+    for (const auto& entry : kFastTimerAllowlist) {
+        if (entry.vendorId == vid.value() && entry.productId == pid.value()) {
+            return entry.minTimerMs;
+        }
+    }
+    return 20;
+}
 } // namespace
 
 ControllerScriptInterfaceLegacy::ControllerScriptInterfaceLegacy(
@@ -134,6 +172,137 @@ QJSValue ControllerScriptInterfaceLegacy::getSetting(const QString& name) {
                         .arg(name));
         return QJSValue::UndefinedValue;
     }
+}
+
+QJSValue ControllerScriptInterfaceLegacy::getWaveformSummary(
+        const QString& group, int nPoints) {
+    const auto pJSEngine = m_pScriptEngineLegacy->jsEngine();
+    if (!pJSEngine) {
+        return QJSValue::NullValue;
+    }
+    // getPlayer() returns a JS proxy, not the deck — use PlayerInfo to reach
+    // the loaded track directly.
+    const TrackPointer pTrack = PlayerInfo::instance().getTrackInfo(group);
+    if (!pTrack) {
+        return QJSValue::NullValue;
+    }
+    ConstWaveformPointer pWaveform = pTrack->getWaveform();
+    if (!pWaveform || pWaveform->getDataSize() <= 0) {
+        // Fall back to the overview (summary) waveform if the full one isn't
+        // loaded yet.
+        pWaveform = pTrack->getWaveformSummary();
+    }
+    if (!pWaveform || pWaveform->getDataSize() <= 0) {
+        return QJSValue::NullValue;
+    }
+    const int srcSize = pWaveform->getDataSize();
+    if (nPoints <= 0 || nPoints > srcSize) {
+        nPoints = srcSize;
+    }
+    // Flat array of [all, low, mid, high] per bin (matches Mixxx's internal
+    // WaveformData layout: all=overall amplitude/height, low/mid/high=bands).
+    // Peak (max) downsampling preserves transients, which is what a waveform
+    // display wants. Each value is 0..255.
+    QJSValue result = pJSEngine->newArray(static_cast<quint32>(nPoints * 4));
+    for (int i = 0; i < nPoints; ++i) {
+        const int s0 = static_cast<int>(
+                static_cast<int64_t>(i) * srcSize / nPoints);
+        int s1 = static_cast<int>(
+                static_cast<int64_t>(i + 1) * srcSize / nPoints);
+        if (s1 <= s0) {
+            s1 = s0 + 1;
+        }
+        if (s1 > srcSize) {
+            s1 = srcSize;
+        }
+        int al = 0, lo = 0, mi = 0, hi = 0;
+        for (int s = s0; s < s1; ++s) {
+            al = std::max<int>(al, pWaveform->getAll(s));
+            lo = std::max<int>(lo, pWaveform->getLow(s));
+            mi = std::max<int>(mi, pWaveform->getMid(s));
+            hi = std::max<int>(hi, pWaveform->getHigh(s));
+        }
+        result.setProperty(static_cast<quint32>(i * 4), al);
+        result.setProperty(static_cast<quint32>(i * 4 + 1), lo);
+        result.setProperty(static_cast<quint32>(i * 4 + 2), mi);
+        result.setProperty(static_cast<quint32>(i * 4 + 3), hi);
+    }
+    return result;
+}
+
+QJSValue ControllerScriptInterfaceLegacy::getBeatInfo(const QString& group) {
+    const auto pJSEngine = m_pScriptEngineLegacy->jsEngine();
+    if (!pJSEngine) {
+        return QJSValue::NullValue;
+    }
+    const TrackPointer pTrack = PlayerInfo::instance().getTrackInfo(group);
+    if (!pTrack) {
+        return QJSValue::NullValue;
+    }
+    const mixxx::BeatsPointer pBeats = pTrack->getBeats();
+    if (!pBeats) {
+        return QJSValue::NullValue;
+    }
+    const double sampleRate = pTrack->getSampleRate();
+    if (sampleRate <= 0.0) {
+        return QJSValue::NullValue;
+    }
+    // First marker = the grid's first downbeat (Mixxx anchors markers there).
+    const auto firstMarker = pBeats->cfirstmarker();
+    const double beatLengthSeconds = firstMarker.beatLengthFrames() / sampleRate;
+    const double firstDownbeatSeconds = (*firstMarker).value() / sampleRate;
+    if (!(beatLengthSeconds > 0.0)) {
+        return QJSValue::NullValue;
+    }
+    QJSValue result = pJSEngine->newArray(2);
+    result.setProperty(0, beatLengthSeconds);
+    result.setProperty(1, firstDownbeatSeconds);
+    return result;
+}
+
+QJSValue ControllerScriptInterfaceLegacy::getCoverArt(const QString& group, int size) {
+    const auto pJSEngine = m_pScriptEngineLegacy->jsEngine();
+    if (!pJSEngine) {
+        return QJSValue::NullValue;
+    }
+    const TrackPointer pTrack = PlayerInfo::instance().getTrackInfo(group);
+    if (!pTrack) {
+        return QJSValue::NullValue;
+    }
+    // loadImage() resolves embedded art or an external cover file and decodes
+    // it. Called once per track load (in the screen's upload sequence), so the
+    // disk read/decode cost is acceptable on the controller thread.
+    const CoverInfo::LoadedImage loaded =
+            pTrack->getCoverInfoWithLocation().loadImage(pTrack);
+    if (loaded.result != CoverInfo::LoadedImage::Result::Ok || loaded.image.isNull()) {
+        return QJSValue::NullValue;
+    }
+    if (size <= 0) {
+        size = 240;   // DDJ-FLX10 jog-screen art is 240x240
+    }
+    // Scale to fill a square then centre-crop, so non-square covers aren't
+    // letterboxed/distorted.
+    const QImage scaled = loaded.image.scaled(size,
+            size,
+            Qt::KeepAspectRatioByExpanding,
+            Qt::SmoothTransformation);
+    const QImage square = scaled.copy((scaled.width() - size) / 2,
+            (scaled.height() - size) / 2,
+            size,
+            size);
+    QByteArray jpeg;
+    QBuffer buffer(&jpeg);
+    if (!buffer.open(QIODevice::WriteOnly) || !square.save(&buffer, "JPEG", 85)) {
+        return QJSValue::NullValue;
+    }
+    buffer.close();
+    // Return the JPEG as a flat JS array of byte values (0..255).
+    QJSValue result = pJSEngine->newArray(static_cast<quint32>(jpeg.size()));
+    for (int i = 0; i < jpeg.size(); ++i) {
+        result.setProperty(static_cast<quint32>(i),
+                static_cast<int>(static_cast<unsigned char>(jpeg.at(i))));
+    }
+    return result;
 }
 
 double ControllerScriptInterfaceLegacy::getValue(const QString& group, const QString& name) {
@@ -509,10 +678,16 @@ int ControllerScriptInterfaceLegacy::beginTimer(
         return 0;
     }
 
-    if (intervalMillis < 20) {
+    // Per-controller allowlist: most controllers capped to 20ms (50 Hz max);
+    // controllers in kFastTimerAllowlist (above) can request as low as their
+    // listed minimum.
+    const int minTimerMs = getMinTimerMsForController(
+            m_pScriptEngineLegacy->getController());
+    if (intervalMillis < minTimerMs) {
         qCWarning(m_logger) << "Timer request for" << intervalMillis
-                            << "ms is too short. Setting to the minimum of 20ms.";
-        intervalMillis = 20;
+                            << "ms is too short. Setting to the minimum of"
+                            << minTimerMs << "ms.";
+        intervalMillis = minTimerMs;
     }
 
     // This makes use of every QObject's internal timer mechanism. Nice, clean,

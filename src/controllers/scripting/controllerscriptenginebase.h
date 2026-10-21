@@ -53,6 +53,13 @@ class ControllerScriptEngineBase : public QObject {
         return m_bTesting;
     }
 
+    /// Access to the underlying controller. Used by ControllerScriptInterfaceLegacy
+    /// to check fast-timer allowlist (per-device timer-min-override).
+    /// Returns nullptr in tests.
+    Controller* getController() const {
+        return m_pController;
+    }
+
 #ifdef MIXXX_USE_QML
     static void registerTrackCollectionManager(
             std::shared_ptr<TrackCollectionManager> pTrackCollectionManager);
