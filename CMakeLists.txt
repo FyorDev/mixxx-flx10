@@ -1211,6 +1211,8 @@ add_library(
   src/dialog/dlgreplacecuecolordlg.ui
   src/effects/backends/builtin/autopaneffect.cpp
   src/effects/backends/builtin/balanceeffect.cpp
+  src/effects/backends/builtin/barberpoleflangereffect.cpp
+  src/effects/backends/builtin/beatdelayeffect.cpp
   src/effects/backends/builtin/bessel4lvmixeqeffect.cpp
   src/effects/backends/builtin/bessel8lvmixeqeffect.cpp
   src/effects/backends/builtin/biquadfullkilleqeffect.cpp
@@ -1219,6 +1221,7 @@ add_library(
   src/effects/backends/builtin/distortioneffect.cpp
   src/effects/backends/builtin/echoeffect.cpp
   src/effects/backends/builtin/filtereffect.cpp
+  src/effects/backends/builtin/filterednoiseeffect.cpp
   src/effects/backends/builtin/flangereffect.cpp
   src/effects/backends/builtin/glitcheffect.cpp
   src/effects/backends/builtin/graphiceqeffect.cpp
@@ -1231,6 +1234,8 @@ add_library(
   src/effects/backends/builtin/parametriceqeffect.cpp
   src/effects/backends/builtin/phasereffect.cpp
   src/effects/backends/builtin/reverbeffect.cpp
+  src/effects/backends/builtin/shepardtoneeffect.cpp
+  src/effects/backends/builtin/stretcheffect.cpp
   src/effects/backends/builtin/threebandbiquadeqeffect.cpp
   src/effects/backends/builtin/tremoloeffect.cpp
   src/effects/backends/builtin/whitenoiseeffect.cpp
@@ -2829,6 +2834,7 @@ if(BUILD_TESTING)
     set(
       src-mixxx-test
       ${src-mixxx-test}
+      src/test/beatfxeffects_test.cpp
       src/test/engineeffectsdelay_test.cpp
       src/test/movinginterquartilemean_test.cpp
       src/test/nativeeffects_test.cpp

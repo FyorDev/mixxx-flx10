@@ -2,6 +2,8 @@
 #include "effects/backends/builtin/builtinbackend.h"
 
 #include "effects/backends/builtin/balanceeffect.h"
+#include "effects/backends/builtin/barberpoleflangereffect.h"
+#include "effects/backends/builtin/beatdelayeffect.h"
 #include "effects/backends/builtin/bessel4lvmixeqeffect.h"
 #include "effects/backends/builtin/bessel8lvmixeqeffect.h"
 #include "effects/backends/builtin/biquadfullkilleqeffect.h"
@@ -20,6 +22,7 @@
 #include "effects/backends/builtin/compressoreffect.h"
 #include "effects/backends/builtin/distortioneffect.h"
 #include "effects/backends/builtin/echoeffect.h"
+#include "effects/backends/builtin/filterednoiseeffect.h"
 #include "effects/backends/builtin/glitcheffect.h"
 #include "effects/backends/builtin/loudnesscontoureffect.h"
 #include "effects/backends/builtin/metronomeeffect.h"
@@ -27,6 +30,8 @@
 #ifdef __RUBBERBAND__
 #include "effects/backends/builtin/pitchshifteffect.h"
 #endif
+#include "effects/backends/builtin/shepardtoneeffect.h"
+#include "effects/backends/builtin/stretcheffect.h"
 #include "effects/backends/builtin/tremoloeffect.h"
 #include "effects/backends/builtin/whitenoiseeffect.h"
 
@@ -64,6 +69,12 @@ BuiltInBackend::BuiltInBackend() {
     registerEffect<DistortionEffect>();
     registerEffect<GlitchEffect>();
     registerEffect<CompressorEffect>();
+    // Beat-synced effects of DJ controllers (Pioneer DDJ-FLX10 Beat FX)
+    registerEffect<BeatDelayEffect>();
+    registerEffect<ShepardToneEffect>();
+    registerEffect<BarberpoleFlangerEffect>();
+    registerEffect<StretchEffect>();
+    registerEffect<FilteredNoiseEffect>();
 }
 
 std::unique_ptr<EffectProcessor> BuiltInBackend::createProcessor(
