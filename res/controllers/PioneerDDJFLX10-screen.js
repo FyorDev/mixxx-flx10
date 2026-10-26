@@ -346,15 +346,51 @@ PioneerDDJFLX10Screen._getCachedTimeBytes = function(deckNum, pos, duration) {
 };
 PioneerDDJFLX10Screen._WAVE_DURATION = 30;     // seconds of test-pattern waveform
 PioneerDDJFLX10Screen._lastDuration  = {1: 0, 2: 0, 3: 0, 4: 0};
-PioneerDDJFLX10Screen._lastPos        = {};
-PioneerDDJFLX10Screen._lastPosTime    = {1: 0, 2: 0, 3: 0, 4: 0};
-PioneerDDJFLX10Screen._lastSmoothMs   = {1: 0, 2: 0, 3: 0, 4: 0};
-// 2026-05-29 v4.2: wall time of the LAST Mixxx pos-value-change. Used to
-// detect "scrub-hold" / stall where play=1 but pos hasn't advanced. When
-// pos is held still for >200ms while play=1 (e.g. user touching the wave),
-// our forward-only interp would keep extrapolating smoothMs forward —
-// same visible-movement bug as the pre-v4.1 pause case.
-PioneerDDJFLX10Screen._lastNewPosTime = {1: 0, 2: 0, 3: 0, 4: 0};
+// Position sent to the firmware, which draws the jog pointer and scrolls the
+// wave from it. Mixxx updates playposition once per audio buffer and those
+// updates arrive in bursts, so jumping to each one (or holding when ahead of
+// it) makes the pointer stutter. Instead the estimate runs on the wall clock
+// and is pulled a little towards Mixxx's position every tick; only seeks,
+// loops and scratches move it at once.
+PioneerDDJFLX10Screen._POS_GAIN     = 0.05;
+PioneerDDJFLX10Screen._POS_SNAP_MS  = 150;
+PioneerDDJFLX10Screen._pos          = {};
+
+PioneerDDJFLX10Screen._smoothPositionMs = function(deckNum, measuredMs, isPlaying) {
+    var now = Date.now();
+    var s = this._pos[deckNum];
+    if (s === undefined) {
+        s = this._pos[deckNum] = {est: measuredMs, at: now, meas: measuredMs,
+                                  measAt: now, interval: 25};
+    }
+    if (measuredMs !== s.meas) {
+        var gap = now - s.measAt;
+        if (gap > 0 && gap < 500) {
+            s.interval += (gap - s.interval) * 0.1;
+        }
+        s.meas = measuredMs;
+        s.measAt = now;
+    }
+    var sinceMeas = now - s.measAt;
+    // No update for a few buffers while playing means the deck is held
+    // (jog touch, scratch hold): stand still instead of running on.
+    var stallMs = Math.max(60, s.interval * 3);
+    if (!isPlaying || sinceMeas > stallMs) {
+        s.est = measuredMs;
+        s.at = now;
+        return Math.floor(s.est);
+    }
+    var dt = Math.min(Math.max(now - s.at, 0), 50);
+    s.at = now;
+    var predicted = s.est + dt;
+    var err = s.meas + sinceMeas - predicted;
+    if (Math.abs(err) > this._POS_SNAP_MS) {
+        s.est = s.meas + sinceMeas;
+    } else {
+        s.est = Math.max(s.est, predicted + err * this._POS_GAIN);
+    }
+    return Math.floor(s.est);
+};
 PioneerDDJFLX10Screen._stateTimer    = null;
 
 
@@ -796,91 +832,7 @@ PioneerDDJFLX10Screen._buildState = function(deckByte, trackLoaded) {
             var wallElapsedSec = fileElapsedSec / rrForPos;
             var isPlaying = engine.getValue(group, "play") > 0;
 
-            // Mixxx's visual_playposition CO updates ~43 Hz (audio buffer rate)
-            // but our timer runs at 200 Hz. Without interpolation, byte 7
-            // stair-steps every 23ms with ~24-unit jumps = visible jitter.
-            // With interpolation: linear forward extrapolation between Mixxx
-            // updates.
-            var nowMs = Date.now();
-            var smoothMs;
-            if (!isPlaying) {
-                // 2026-05-29 v4.1: when Mixxx is PAUSED, freeze smoothMs at
-                // the exact wall-elapsed value. Without this, msSince grows
-                // unboundedly between Mixxx updates (which don't arrive while
-                // paused), making the wave/time appear to keep moving and
-                // periodically resync via the runaway clamp = visible flash.
-                this._lastPos[deckNum]      = pos;
-                this._lastPosTime[deckNum]  = nowMs;
-                this._lastSmoothMs[deckNum] = wallElapsedSec * 1000;
-                smoothMs = Math.floor(wallElapsedSec * 1000);
-            } else {
-                // Track wall time of the last actual pos-value-change. Used
-                // for scrub-hold stall detection below.
-                if (this._lastPos[deckNum] === undefined ||
-                    pos !== this._lastPos[deckNum]) {
-                    this._lastNewPosTime[deckNum] = nowMs;
-                }
-                if (this._lastPos[deckNum] === undefined ||
-                    Math.abs(pos - this._lastPos[deckNum]) > 0.005) {
-                    // Track loaded / seek: reset interpolation base
-                    this._lastPos[deckNum]     = pos;
-                    this._lastPosTime[deckNum] = nowMs;
-                    this._lastSmoothMs[deckNum] = wallElapsedSec * 1000;
-                } else if (pos !== this._lastPos[deckNum]) {
-                    // 2026-05-29 v4.3 FIX: handle backward pos jumps as
-                    // user seeks (snap immediately) while keeping the v4
-                    // forward-only re-anchor for forward updates. Earlier
-                    // v4 logic refused to update _lastSmoothMs on backward
-                    // pos jumps too  causing the wave/time to keep going
-                    // forward during a backward scrub until the runaway
-                    // clamp fired (~500ms catchup lag). Mixxx's pos doesn't
-                    // jitter backward during normal play (Serato's wire has
-                    // 0 backward jumps in 53s), so any backward Δpos is a
-                    // genuine user seek and should snap.
-                    var posDelta = pos - this._lastPos[deckNum];
-                    this._lastPos[deckNum] = pos;
-                    if (posDelta < 0) {
-                        // Backward = user seek/scrub. Snap to current.
-                        this._lastSmoothMs[deckNum] = wallElapsedSec * 1000;
-                        this._lastPosTime[deckNum]  = nowMs;
-                    } else {
-                        // Forward: only re-anchor when wall has actually
-                        // moved past our extrapolation (v4 behavior).
-                        var newWallMs      = wallElapsedSec * 1000;
-                        var extrapolatedMs = this._lastSmoothMs[deckNum] +
-                                             (nowMs - this._lastPosTime[deckNum]);
-                        if (newWallMs > extrapolatedMs) {
-                            this._lastSmoothMs[deckNum] = newWallMs;
-                            this._lastPosTime[deckNum]  = nowMs;
-                        }
-                        // Else: hold extrapolation; msSince keeps growing.
-                    }
-                }
-                var msSince = nowMs - this._lastPosTime[deckNum];
-                smoothMs = Math.floor(this._lastSmoothMs[deckNum] + msSince);
-                // 2026-05-29 v4.2 — SCRUB-HOLD FREEZE. If Mixxx has not sent
-                // a new pos value in 200ms while play=1, treat as a stall
-                // (scrub-touch / wave scratch / Mixxx audio glitch) and snap
-                // smoothMs to wallElapsedSec*1000. Otherwise our forward-only
-                // interp keeps extrapolating and the wave/time visibly drifts
-                // forward — same symptom as pre-v4.1 paused state.
-                if (nowMs - this._lastNewPosTime[deckNum] > 200) {
-                    this._lastSmoothMs[deckNum] = wallElapsedSec * 1000;
-                    this._lastPosTime[deckNum]  = nowMs;
-                    smoothMs = Math.floor(wallElapsedSec * 1000);
-                } else {
-                    // Runaway clamp: if extrapolation drifts >500ms past
-                    // wall (e.g. Mixxx stalled mid-play and the scrub-hold
-                    // check missed it), hard-resync forward. Old +200ms-
-                    // every-tick clamp caused periodic backward jumps.
-                    var maxMs = Math.floor(wallElapsedSec * 1000) + 500;
-                    if (smoothMs > maxMs) {
-                        this._lastSmoothMs[deckNum] = wallElapsedSec * 1000;
-                        this._lastPosTime[deckNum]  = nowMs;
-                        smoothMs = Math.floor(wallElapsedSec * 1000);
-                    }
-                }
-            }
+            var smoothMs = this._smoothPositionMs(deckNum, wallElapsedSec * 1000, isPlaying);
             // 2026-05-29: bytes 5/6/7/8 form a co-encoded position field
             //   T = b5*60 + b6 + (b8*256 + b7) / 1024
             // where T is wall-time elapsed seconds. Validated zero-violation
@@ -1330,45 +1282,39 @@ PioneerDDJFLX10Screen._sendStateAllDecks = function() {
     // the LAST deck per IO cycle (others superseded → choppy with 2+ decks).
     // The FIFO preserves each distinct packet, so every deck scrolls
     // independently at the full tick rate (200Hz). Per-deck dedup means an
-    // idle/paused deck (identical xx27) costs no bandwidth. xx27 is NEVER capped
-    // — 4 decks × 200Hz = 800/s stays under the ~1000/s hidraw drain, so live
-    // play/scrub/loop/reverse-slip on all decks stays smooth.
+    // idle/paused deck (identical xx27) costs no bandwidth. xx27 goes first;
+    // with four playing decks the start deck rotates so none starves.
     var buildStart = Date.now();
-    var sent = 0;
-    for (var d = 1; d <= 4; d++) {
+    this._refillHidTokens(buildStart);
+    for (var k = 0; k < 4; k++) {
+        var d = ((this._xx27RR + k) % 4) + 1;
         var duration = engine.getValue("[Channel" + d + "]", "duration");
         this._lastDuration[d] = duration;
         if (!(duration > 0)) { continue; }
         if (this._FORCE_STATE_EMPTY_FOR_MIDI_TEXT) { continue; }
         var pkt = this._buildState(this._DECK_BYTE[d - 1], true);
-        if (this._xx27Changed(d, pkt)) {
+        if (this._xx27Changed(d, pkt) && this._hidTokens >= 1) {
             this._lastXX27[d] = pkt;
-            controller.send(pkt, 0, 0, true);
-            sent++;
+            this._sendBudgeted(pkt);
         }
     }
+    this._xx27RR = (this._xx27RR + 1) % 4;
     var afterBuild = Date.now();
-    // Pace the bulk waveform upload into whatever bandwidth this tick has left.
-    // This is what keeps the 32-slot FIFO from overflowing: total enqueues/tick
-    // are capped at _TICK_BUDGET (≈1000/s), with xx27 taking priority and the
-    // bulk getting the remainder. A fresh load fills in over a few seconds while
-    // other decks keep playing at full rate — no dropped xx27 frames.
+    // The bulk waveform upload, then EQ refreshes, get what is left.
     var hadBulk = this._txQueue.length > 0;
-    while (sent < this._TICK_BUDGET && this._txQueue.length > 0) {
-        controller.send(this._txQueue.shift(), 0, 0, true);
-        sent++;
+    while (this._hidTokens >= 1 && this._txQueue.length > 0) {
+        this._sendBudgeted(this._txQueue.shift());
     }
     if (hadBulk && this._txQueue.length === 0) {
         console.log("FLX10 screen: upload queue drained");
     }
     // Then EQ-refresh packets (lower priority than the initial bulk), drained
     // round-robin across decks so no deck's EQ window starves another's.
-    for (var rstep = 0; rstep < 4 && sent < this._TICK_BUDGET; rstep++) {
+    for (var rstep = 0; rstep < 4 && this._hidTokens >= 1; rstep++) {
         var rd = ((this._refreshRR + rstep) % 4) + 1;
         var rq = this._refreshQueue[rd];
-        while (sent < this._TICK_BUDGET && rq.length > 0) {
-            controller.send(rq.shift(), 0, 0, true);
-            sent++;
+        while (this._hidTokens >= 1 && rq.length > 0) {
+            this._sendBudgeted(rq.shift());
         }
     }
     this._refreshRR = (this._refreshRR + 1) % 4;
@@ -1376,9 +1322,33 @@ PioneerDDJFLX10Screen._sendStateAllDecks = function() {
     s.buildMs += (afterBuild - buildStart);
     s.sendMs += (afterSend - afterBuild);
 };
-// Per-tick HID send budget. _STATE_MS=5ms × 5 = ~1000 reports/s, matching the
-// measured hidraw drain rate. Lower this if FIFO overflows persist.
+// Per-tick HID send budget of the rekordbox dialect.
 PioneerDDJFLX10Screen._TICK_BUDGET = 5;
+
+// Serato-dialect send budget. The jog screen endpoint (interrupt OUT,
+// bInterval 4 at high speed) takes about one report per millisecond, and
+// Mixxx's non-skipping FIFO holds 32 reports and drops the rest ("FIFO
+// overflow" in the log), losing position packets. So every packet, including
+// the direct scroll updates, takes a token, refilled below that rate.
+PioneerDDJFLX10Screen._HID_RATE_PER_MS = 0.7;
+PioneerDDJFLX10Screen._HID_BURST       = 8;
+PioneerDDJFLX10Screen._hidTokens       = 0;
+PioneerDDJFLX10Screen._hidRefillAt     = 0;
+PioneerDDJFLX10Screen._xx27RR          = 0;
+
+PioneerDDJFLX10Screen._refillHidTokens = function(now) {
+    if (this._hidRefillAt === 0) {
+        this._hidRefillAt = now;
+    }
+    this._hidTokens = Math.min(this._HID_BURST,
+        this._hidTokens + (now - this._hidRefillAt) * this._HID_RATE_PER_MS);
+    this._hidRefillAt = now;
+};
+
+PioneerDDJFLX10Screen._sendBudgeted = function(pkt) {
+    controller.send(pkt, 0, 0, true);
+    this._hidTokens -= 1;
+};
 
 // Event-driven scheduler: called whenever playposition / rate_ratio changes.
 // Throttles to _SEND_MIN_GAP_MS to avoid flooding Mixxx's HID write queue.
@@ -1714,8 +1684,8 @@ PioneerDDJFLX10Screen._uploadWaveform = function(deck, durationSec, entryBytes) 
 
     console.log("FLX10 screen: native waveform queued deck " + deck +
                 " (" + nEntries + " entries, " + this._txQueue.length +
-                " packets) — bulk paced into spare bandwidth, budget " +
-                this._TICK_BUDGET + "/tick");
+                " packets) — bulk paced into spare bandwidth, " +
+                this._HID_RATE_PER_MS * 1000 + " reports/s total");
 };
 
 
@@ -1742,7 +1712,7 @@ PioneerDDJFLX10Screen._sendScrollUpdate = function(deck, posEntries, entryBytes,
     }
     if (direct) {
         this._lastSentPkt = p;
-        controller.send(p, 0, 0, true);
+        this._sendBudgeted(p);
     } else {
         this._sendRaw(p);
     }
