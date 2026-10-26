@@ -9,10 +9,12 @@ controller needs. It merges the work of several people, see
 
 | Part | Files | Status |
 | --- | --- | --- |
-| MIDI mapping | `res/controllers/Pioneer-DDJ-FLX10.midi.xml`, `Pioneer-DDJ-FLX10-scripts.js` | Mixer, decks, jog, tempo, sync, loops, Beat FX, Sound Color FX, STEMS, channel 16 jog display |
+| MIDI mapping | `res/controllers/Pioneer-DDJ-FLX10.midi.xml`, `Pioneer-DDJ-FLX10-scripts.js` | Mixer, decks, jog, tempo, sync, loops, STEMS, channel 16 jog display |
+| FX section | `res/controllers/Pioneer-DDJ-FLX10-fx.js` | All 14 Beat FX and 6 Sound Color FX (see below) |
 | Pads | `res/controllers/Pioneer-DDJ-FLX10-pads.js` | All 8 pad modes, both pages, sampler banks, colours; memory cues (CUE/LOOP CALL) |
 | Jog screens (HID) | `res/controllers/PioneerDDJFLX10-screen.hid.xml`, `PioneerDDJFLX10-screen.js`, `Pioneer-DDJ-FLX10-screen-sysex.js` | Serato protocol: waveform, artwork, time, BPM. rekordbox protocol: experimental |
-| Script API | `src/controllers/scripting/legacy/controllerscriptinterfacelegacy.*` | `engine.getWaveformSummary()`, `engine.getBeatInfo()`, `engine.getCoverArt()`, faster timers for the FLX10 |
+| Script API | `src/controllers/scripting/legacy/controllerscriptinterfacelegacy.*` | `engine.getWaveformSummary()`, `engine.getBeatInfo()`, `engine.getCoverArt()`, `engine.loadEffect()`, `engine.setEffectParameter()`, faster timers for the FLX10 |
+| Effects | `src/effects/backends/builtin/` | Beat Delay, Shepard Tone, Barberpole Flanger, Stretch, Filtered Noise; effects on the master bus follow the playing deck's tempo |
 | Linux setup | `res/controllers/flx10-autounlock/` | settings/unlock (`flx10_setup.py`), DJ logo upload, udev + systemd |
 | Nix | `flake.nix` | `packages.mixxx-flx10`, `packages.flx10-setup`, `nixosModules.flx10` |
 
@@ -71,6 +73,50 @@ Install Pioneer's driver; it does the unlock. The mappings work the same.
    LEVEL and HEADPHONES MIX stay analogue and Mixxx's headphone mix is set
    to cue only), "MIX POINT LINK button" (Mix Point Link or Key Lock).
 
+## Beat FX and Sound Color FX
+
+The FX section builds each effect from Mixxx effects, loaded by id with
+`engine.loadEffect()` into effect unit 1 (Beat FX) and the decks' Quick
+Effect chains (Sound Color FX), so it does not depend on the preset lists.
+They are recreations of what the Operating Instructions describe, not
+Pioneer's algorithms.
+
+| Beat FX | Built from | BEAT < / > |
+| --- | --- | --- |
+| LOW CUT ECHO, ECHO | Beat Delay (low cut on the repeats for LOW CUT ECHO) | 1/16 - 16 beats |
+| MT DELAY | Beat Delay with 7 taps | 1/16 - 16 beats |
+| SPIRAL | Beat Delay with pitch glide into Reverb | 1/16 - 16 beats |
+| REVERB | Reverb | size 1 - 100 % |
+| TRANS | Tremolo, square wave; LEVEL also lengthens the cut | 1/16 - 16 beats (Mixxx limits it to 1/8 - 4) |
+| ENIGMA JET | Barberpole Flanger | -64 .. +64 beats, sign = falling / rising |
+| FLANGER | Flanger | 1/16 - 64 beats (1/4 - 32 in Mixxx) |
+| PHASER | Phaser | 1/16 - 64 beats (up to 4 in Mixxx) |
+| STRETCH | Stretch; LEVEL is the stretch factor 1 - 4 | retrigger 1/16 - 16 beats |
+| SLIP ROLL, ROLL | loop roll / beat loop on the selected deck (MST: every playing deck) | 1/16 - 16 beats |
+| MOBIUS SAW, TRI | Shepard Tone | -64 .. +64 beats |
+
+LEVEL/DEPTH is the dry/wet of the effect unit. CH SELECT routes it to a
+deck, the master, all microphones (MIC) or all samplers (SP). The ON
+button flashes while the effect runs. SHIFT + ON is Release FX: delays
+stop taking input and ring out for four beats, other effects stop at
+once. SHIFT + BEAT < / > select AUTO (the effects follow the tempo of
+what they process) and TAP (tap the tempo on BEAT >).
+
+| Sound Color FX | Left of centre | Right of centre |
+| --- | --- | --- |
+| SPACE | reverb on lows and mids | reverb on mids and highs |
+| D.ECHO | dub echo on the mids | dub echo on the highs (echoes keep going at the centre) |
+| CRUSH | bit crusher | bit crusher and rising high-pass |
+| PITCH | pitch down | pitch up |
+| NOISE | white noise, closing low-pass | white noise, rising high-pass |
+| FILTER | low-pass | high-pass |
+
+At the centre the effect is off. With no Sound Color FX button lit the
+COLOR knobs do nothing, as in rekordbox, and Mixxx's own Quick Effect is
+left alone. On a stock Mixxx without `engine.loadEffect()` the Sound Color
+FX fall back to the stock quick effect presets and the Beat FX section
+only switches, routes and mixes whatever chain is loaded in effect unit 1.
+
 ## Controls that differ from rekordbox
 
 - STEMS: needs stem files (`.stem.mp4`); Mixxx does not separate tracks in
@@ -80,9 +126,7 @@ Install Pioneer's driver; it does the unlock. The mappings work the same.
 - PAD FX uses effect units 3 and 4 and loop rolls; Pioneer's own effect
   algorithms are not available.
 - Memory cues are stored as hot cues 17-36.
-- VIEW held adds the track to Auto DJ (rekordbox: Tag List). BEAT < / >
-  change parameter 1 of the Beat FX effects; Release FX switches the Beat
-  FX off at once.
+- VIEW held adds the track to Auto DJ (rekordbox: Tag List).
 - Fader Start messages are only sent when Fader Start is enabled in the
   unit's settings (`flx10_setup.py settings --fader-start on`).
 - FX PART SELECT applies the Sound Color FX knob to the selected stem parts
