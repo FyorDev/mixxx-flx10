@@ -1244,18 +1244,12 @@ PioneerDDJFLX10.soundColorFx = function(channel, control, value, status, group) 
             engine.setValue("[QuickEffectRack1_" + channels[i] + "]", "loaded_chain_preset", preset);
             engine.setValue("[QuickEffectRack1_" + channels[i] + "_Effect1]", "enabled", 1);
             PioneerDDJFLX10._loadStemColorFx(i + 1, preset);
-            // Block each channel's knob immediately with a sentinel that no physical
-            // position can match, preventing any jump before the preset settles.
-            PioneerDDJFLX10._colorFxSoftTakeover[i + 1] = true;
-            PioneerDDJFLX10._colorFxSoftTakeoverTarget[i + 1] = -1;
         }
-        // After 50 ms read each channel's actual settled super1 as the takeover target.
-        var chSnapshot = channels.slice();
+        // Loading a preset resets super1; the COLOR knobs are the only
+        // control for it, so put back where each knob physically is.
         engine.beginTimer(50, function() {
-            for (var j = 0; j < chSnapshot.length; j++) {
-                PioneerDDJFLX10._colorFxSoftTakeoverTarget[j + 1] = engine.getValue(
-                    "[QuickEffectRack1_" + chSnapshot[j] + "]", "super1"
-                );
+            for (var d = 1; d <= 4; d++) {
+                PioneerDDJFLX10._applyColorFxKnob(d, PioneerDDJFLX10._colorFxKnobPosition[d]);
             }
         }, true);
         PioneerDDJFLX10._colorFxActive = control;
@@ -1267,8 +1261,6 @@ PioneerDDJFLX10.soundColorFx = function(channel, control, value, status, group) 
 // Keyed by deck number (1–4).
 PioneerDDJFLX10._colorFxKnobMSB      = {1: 63,   2: 63,   3: 63,   4: 63};
 PioneerDDJFLX10._colorFxKnobPosition = {1: 0.5,  2: 0.5,  3: 0.5,  4: 0.5};
-PioneerDDJFLX10._colorFxSoftTakeover = {1: false, 2: false, 3: false, 4: false};
-PioneerDDJFLX10._colorFxSoftTakeoverTarget = {1: -1, 2: -1, 3: -1, 4: -1};
 
 PioneerDDJFLX10.soundColorFxKnobMSB = function(channel, control, value, status, group) {
     var deck = PioneerDDJFLX10._getDeckFromGroup(group);
@@ -1278,18 +1270,13 @@ PioneerDDJFLX10.soundColorFxKnobMSB = function(channel, control, value, status, 
 PioneerDDJFLX10.soundColorFxKnobLSB = function(channel, control, value, status, group) {
     var deck = PioneerDDJFLX10._getDeckFromGroup(group);
     var position = (PioneerDDJFLX10._colorFxKnobMSB[deck] * 128 + value) / 16383.0;
-    var prev = PioneerDDJFLX10._colorFxKnobPosition[deck];
     PioneerDDJFLX10._colorFxKnobPosition[deck] = position;
+    PioneerDDJFLX10._applyColorFxKnob(deck, position);
+};
 
-    if (PioneerDDJFLX10._colorFxSoftTakeover[deck]) {
-        var target = PioneerDDJFLX10._colorFxSoftTakeoverTarget[deck];
-        if ((prev <= target && position >= target) || (prev >= target && position <= target)) {
-            PioneerDDJFLX10._colorFxSoftTakeover[deck] = false;
-        } else {
-            return;
-        }
-    }
-
+// The COLOR knob is absolute, as in rekordbox: the effect always follows the
+// physical position, also right after another Sound Color FX is chosen.
+PioneerDDJFLX10._applyColorFxKnob = function(deck, position) {
     if (PioneerDDJFLX10._colorFxOnParts(deck, position)) {
         return;
     }
