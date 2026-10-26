@@ -260,8 +260,12 @@ PioneerDDJFLX10.init = function(id) {
     // LEDs Play/Cue avancées (Pioneer-like)
     PioneerDDJFLX10._initAdvancedLeds();
 
+    // Mixxx opens the MIDI output only after init() returns; SysEx sent from
+    // init is dropped, so the handshake goes out from a timer.
     if (!midiJogDisplay && typeof PioneerDDJFLX10.startScreenHandshake === "function") {
-        PioneerDDJFLX10.startScreenHandshake(screenMode);
+        engine.beginTimer(500, function() {
+            PioneerDDJFLX10.startScreenHandshake(screenMode);
+        }, true);
     }
 
     // Performance pads (all modes, both pages, colours): Pioneer-DDJ-FLX10-pads.js
