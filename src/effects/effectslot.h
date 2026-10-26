@@ -125,6 +125,18 @@ class EffectSlot : public QObject {
 
     void setEnabled(bool enabled);
 
+    /// For controller scripts, callable from any thread: find the slot by its
+    /// group and queue the work to the slot's thread, so a load and later
+    /// parameter changes arrive in call order. Parameters are addressed by
+    /// their manifest id, independent of how the user arranged the knobs.
+    /// Return false if there is no such slot or effect.
+    static bool requestLoadEffect(const QString& group,
+            const QString& effectId,
+            const QList<std::pair<QString, double>>& parameterValues);
+    static bool requestSetParameter(const QString& group,
+            const QString& parameterId,
+            double value);
+
   public slots:
     void setMetaParameter(double v, bool force = false);
 
@@ -160,6 +172,9 @@ class EffectSlot : public QObject {
 
     void loadParameters();
     void unloadEffect();
+
+    void setParameterById(const QString& parameterId, double value);
+    void unlinkKnobParameters();
 
     const unsigned int m_iEffectNumber;
     QHash<EffectParameterType, unsigned int> m_iNumParameterSlots;

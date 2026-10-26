@@ -1,6 +1,7 @@
 #include "controllerscriptinterfacelegacy.h"
 
 #include <QBuffer>
+#include <QJSValueIterator>
 #include <QStringEncoder>
 #include <gsl/pointers>
 
@@ -10,6 +11,7 @@
 #include "controllers/controller.h"
 #include "controllers/scripting/legacy/controllerscriptenginelegacy.h"
 #include "controllers/scripting/legacy/scriptconnectionjsproxy.h"
+#include "effects/effectslot.h"
 #include "library/coverart.h"
 #include "mixer/basetrackplayer.h"
 #include "mixer/playerinfo.h"
@@ -258,6 +260,44 @@ QJSValue ControllerScriptInterfaceLegacy::getBeatInfo(const QString& group) {
     result.setProperty(0, beatLengthSeconds);
     result.setProperty(1, firstDownbeatSeconds);
     return result;
+}
+
+bool ControllerScriptInterfaceLegacy::loadEffect(const QString& group,
+        const QString& effectId,
+        const QJSValue& parameters) {
+    QList<std::pair<QString, double>> values;
+    if (parameters.isObject()) {
+        QJSValueIterator it(parameters);
+        while (it.hasNext()) {
+            it.next();
+            const double value = it.value().toNumber();
+            if (util_isnan(value)) {
+                m_pScriptEngineLegacy->logOrThrowError(QStringLiteral(
+                        "loadEffect: parameter %1 of %2 is not a number")
+                                .arg(it.name(), effectId));
+                continue;
+            }
+            values.append({it.name(), value});
+        }
+    }
+    if (!EffectSlot::requestLoadEffect(group, effectId, values)) {
+        qCWarning(m_logger) << "loadEffect: no effect slot" << group
+                            << "or no effect" << effectId;
+        return false;
+    }
+    return true;
+}
+
+bool ControllerScriptInterfaceLegacy::setEffectParameter(const QString& group,
+        const QString& parameterId,
+        double value) {
+    if (util_isnan(value)) {
+        m_pScriptEngineLegacy->logOrThrowError(QStringLiteral(
+                "setEffectParameter: %1 of %2 is not a number")
+                        .arg(parameterId, group));
+        return false;
+    }
+    return EffectSlot::requestSetParameter(group, parameterId, value);
 }
 
 QJSValue ControllerScriptInterfaceLegacy::getCoverArt(const QString& group, int size) {

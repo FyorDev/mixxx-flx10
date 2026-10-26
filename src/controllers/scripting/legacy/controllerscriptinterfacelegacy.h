@@ -75,6 +75,19 @@ class ControllerScriptInterfaceLegacy : public QObject {
     // no track/cover. Lets a controller screen show real album art without an
     // external daemon.
     Q_INVOKABLE QJSValue getCoverArt(const QString& group, int size = 0);
+    // Loads the effect with the given id (e.g. "org.mixxx.effects.echo") into
+    // an effect slot such as "[EffectRack1_EffectUnit1_Effect1]", keeps it if
+    // it is already loaded, unlinks its knobs from the chain's super knob and
+    // sets the given parameters {parameterId: value} in their own units.
+    // Works asynchronously; later setEffectParameter() calls apply after it.
+    // Returns false for an unknown slot or effect id.
+    Q_INVOKABLE bool loadEffect(const QString& group,
+            const QString& effectId,
+            const QJSValue& parameters = QJSValue());
+    // Sets a parameter of the effect in a slot by its id, in its own units.
+    Q_INVOKABLE bool setEffectParameter(const QString& group,
+            const QString& parameterId,
+            double value);
     Q_INVOKABLE double getValue(const QString& group, const QString& name);
     Q_INVOKABLE void setValue(const QString& group, const QString& name, double newValue);
     Q_INVOKABLE double getParameter(const QString& group, const QString& name);

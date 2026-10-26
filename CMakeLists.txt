@@ -2835,6 +2835,7 @@ if(BUILD_TESTING)
       src-mixxx-test
       ${src-mixxx-test}
       src/test/beatfxeffects_test.cpp
+      src/test/effectslotscriptapi_test.cpp
       src/test/engineeffectsdelay_test.cpp
       src/test/movinginterquartilemean_test.cpp
       src/test/nativeeffects_test.cpp

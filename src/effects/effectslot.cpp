@@ -1,10 +1,13 @@
 #include "effects/effectslot.h"
 
 #include <QDebug>
+#include <QPointer>
 
 #include "control/controlencoder.h"
+#include "control/controlobject.h"
 #include "control/controlpushbutton.h"
 #include "effects/backends/effectmanifest.h"
+#include "effects/backends/effectsbackendmanager.h"
 #include "effects/defs.h"
 #include "effects/effectbuttonparameterslot.h"
 #include "effects/effectchain.h"
@@ -17,10 +20,17 @@
 #include "effects/visibleeffectslist.h"
 #include "engine/effects/engineeffect.h"
 #include "moc_effectslot.cpp"
+#include "util/compatibility/qmutex.h"
 #include "util/math.h"
 
 // The maximum number of effect parameters we're going to support.
 constexpr unsigned int kDefaultMaxParameters = 16;
+
+namespace {
+QMutex s_slotRegistryMutex;
+QHash<QString, QPointer<EffectSlot>> s_slotRegistry;
+
+} // namespace
 
 EffectSlot::EffectSlot(const QString& group,
         EffectsManager* pEffectsManager,
@@ -38,6 +48,10 @@ EffectSlot::EffectSlot(const QString& group,
           m_pChain(pChainSlot),
           m_pEngineEffectChain(pEngineEffectChain),
           m_pEngineEffect(nullptr) {
+    {
+        const auto locker = lockMutex(&s_slotRegistryMutex);
+        s_slotRegistry.insert(m_group, this);
+    }
     VERIFY_OR_DEBUG_ASSERT(m_pEngineEffectChain) {
         return;
     }
@@ -147,6 +161,12 @@ EffectSlot::EffectSlot(const QString& group,
 
 EffectSlot::~EffectSlot() {
     //qDebug() << debugString() << "destroyed";
+    {
+        const auto locker = lockMutex(&s_slotRegistryMutex);
+        if (s_slotRegistry.value(m_group) == this) {
+            s_slotRegistry.remove(m_group);
+        }
+    }
     unloadEffect();
 }
 
@@ -599,4 +619,90 @@ void EffectSlot::slotEffectMetaParameter(double v, bool force) {
 
 void EffectSlot::slotPresetListVisibleChanged(bool visible) {
     m_pControlShowPresetList->setAndConfirm(visible ? 1.0 : 0.0);
+}
+
+// static
+bool EffectSlot::requestLoadEffect(const QString& group,
+        const QString& effectId,
+        const QList<std::pair<QString, double>>& parameterValues) {
+    // Held until the request is queued: the destructor takes it too.
+    const auto locker = lockMutex(&s_slotRegistryMutex);
+    EffectSlot* pSlot = s_slotRegistry.value(group).data();
+    if (!pSlot) {
+        return false;
+    }
+    EffectManifestPointer pManifest;
+    for (const auto& pCandidate : pSlot->m_pBackendManager->getManifests()) {
+        if (pCandidate->id() == effectId) {
+            pManifest = pCandidate;
+            break;
+        }
+    }
+    if (!pManifest) {
+        return false;
+    }
+    QMetaObject::invokeMethod(
+            pSlot,
+            [pSlot, pManifest, parameterValues]() {
+                if (pSlot->getManifest() != pManifest) {
+                    pSlot->loadEffectWithDefaults(pManifest);
+                }
+                pSlot->unlinkKnobParameters();
+                for (const auto& [parameterId, value] : parameterValues) {
+                    pSlot->setParameterById(parameterId, value);
+                }
+            },
+            Qt::QueuedConnection);
+    return true;
+}
+
+// static
+bool EffectSlot::requestSetParameter(const QString& group,
+        const QString& parameterId,
+        double value) {
+    const auto locker = lockMutex(&s_slotRegistryMutex);
+    EffectSlot* pSlot = s_slotRegistry.value(group).data();
+    if (!pSlot) {
+        return false;
+    }
+    QMetaObject::invokeMethod(
+            pSlot,
+            [pSlot, parameterId, value]() {
+                pSlot->setParameterById(parameterId, value);
+            },
+            Qt::QueuedConnection);
+    return true;
+}
+
+void EffectSlot::setParameterById(const QString& parameterId, double value) {
+    // Parameters shown on a knob or button are set through its control, so
+    // skins and soft takeover see the change; hidden ones directly.
+    const std::pair<EffectParameterType, QString> slotPrefixes[] = {
+            {EffectParameterType::Knob, QStringLiteral("parameter%1")},
+            {EffectParameterType::Button, QStringLiteral("button_parameter%1")}};
+    for (const auto& [type, prefix] : slotPrefixes) {
+        const auto& loaded = m_loadedParameters.value(type);
+        for (int i = 0; i < loaded.size(); ++i) {
+            if (loaded.at(i)->manifest()->id() == parameterId) {
+                ControlObject::set(ConfigKey(m_group, prefix.arg(i + 1)), value);
+                return;
+            }
+        }
+    }
+    for (const auto& parameters : std::as_const(m_allParameters)) {
+        for (const auto& pParameter : parameters) {
+            if (pParameter->manifest()->id() == parameterId) {
+                pParameter->setValue(value);
+                return;
+            }
+        }
+    }
+}
+
+void EffectSlot::unlinkKnobParameters() {
+    const int count = m_loadedParameters.value(EffectParameterType::Knob).size();
+    for (int i = 1; i <= count; ++i) {
+        ControlObject::set(ConfigKey(m_group, QStringLiteral("parameter%1_link_type").arg(i)),
+                static_cast<double>(EffectManifestParameter::LinkType::None));
+    }
 }
