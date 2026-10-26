@@ -48,6 +48,7 @@
             <file filename="Pioneer-DDJ-FLX10-screen-sysex.js" functionprefix=""/>
             <file filename="Pioneer-DDJ-FLX10-mixpoint.js" functionprefix=""/>
             <file filename="Pioneer-DDJ-FLX10-extras.js" functionprefix=""/>
+            <file filename="Pioneer-DDJ-FLX10-fx.js" functionprefix=""/>
         </scriptfiles>
         <controls>
             <control>
@@ -92,12 +93,12 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>mix</key>
+                <key>PioneerDDJFLX10Fx.beatFxLevelMsb</key>
                 <description>MIDI Learned from 1038 messages.</description>
                 <status>0xB4</status>
                 <midino>0x02</midino>
                 <options>
-                    <fourteen-bit-msb/>
+                    <script-binding/>
                 </options>
             </control>
             <control>
@@ -258,7 +259,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10.beatFxChannelSelect</key>
+                <key>PioneerDDJFLX10Fx.beatFxChannelSelect</key>
                 <description>BeatFX channel select CH1 (note 0x10)</description>
                 <status>0x94</status>
                 <midino>0x10</midino>
@@ -308,7 +309,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10.beatFxChannelSelect</key>
+                <key>PioneerDDJFLX10Fx.beatFxChannelSelect</key>
                 <description>BeatFX channel select CH2 (note 0x11)</description>
                 <status>0x94</status>
                 <midino>0x11</midino>
@@ -318,7 +319,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10.beatFxChannelSelect</key>
+                <key>PioneerDDJFLX10Fx.beatFxChannelSelect</key>
                 <description>BeatFX channel select CH3 (note 0x12)</description>
                 <status>0x94</status>
                 <midino>0x12</midino>
@@ -328,7 +329,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10.beatFxChannelSelect</key>
+                <key>PioneerDDJFLX10Fx.beatFxChannelSelect</key>
                 <description>BeatFX channel select CH4 (note 0x13)</description>
                 <status>0x94</status>
                 <midino>0x13</midino>
@@ -418,7 +419,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10.beatFxChannelSelect</key>
+                <key>PioneerDDJFLX10Fx.beatFxChannelSelect</key>
                 <description>BeatFX channel select MST (note 0x14)</description>
                 <status>0x94</status>
                 <midino>0x14</midino>
@@ -468,7 +469,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10.beatFxChannelSelect</key>
+                <key>PioneerDDJFLX10Fx.beatFxChannelSelect</key>
                 <description>BeatFX channel select MIC (note 0x15)</description>
                 <status>0x94</status>
                 <midino>0x15</midino>
@@ -478,7 +479,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10.beatFxChannelSelect</key>
+                <key>PioneerDDJFLX10Fx.beatFxChannelSelect</key>
                 <description>BeatFX channel select SP/no-op (note 0x16)</description>
                 <status>0x94</status>
                 <midino>0x16</midino>
@@ -489,7 +490,7 @@
             <!-- Sound Color FX knob CH1 — 14-bit, MSB=CC0x17 + LSB=CC0x37 on 0xB6 -->
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobMSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobMsb</key>
                 <description>Sound Color FX knob MSB CH1</description>
                 <status>0xB6</status>
                 <midino>0x17</midino>
@@ -499,7 +500,7 @@
             </control>
             <control>
                 <group>[Channel1]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobLSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobLsb</key>
                 <description>Sound Color FX knob LSB CH1</description>
                 <status>0xB6</status>
                 <midino>0x37</midino>
@@ -509,7 +510,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobMSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobMsb</key>
                 <description>Sound Color FX knob MSB CH2</description>
                 <status>0xB6</status>
                 <midino>0x18</midino>
@@ -559,7 +560,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobMSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobMsb</key>
                 <description>Sound Color FX knob MSB CH3</description>
                 <status>0xB6</status>
                 <midino>0x19</midino>
@@ -609,7 +610,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobMSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobMsb</key>
                 <description>Sound Color FX knob MSB CH4</description>
                 <status>0xB6</status>
                 <midino>0x1A</midino>
@@ -629,7 +630,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 1</description>
                 <status>0x94</status>
                 <midino>0x20</midino>
@@ -679,7 +680,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 2</description>
                 <status>0x94</status>
                 <midino>0x21</midino>
@@ -769,7 +770,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 3</description>
                 <status>0x94</status>
                 <midino>0x22</midino>
@@ -819,17 +820,17 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>mix</key>
+                <key>PioneerDDJFLX10Fx.beatFxLevelLsb</key>
                 <description>MIDI Learned from 1038 messages.</description>
                 <status>0xB4</status>
                 <midino>0x22</midino>
                 <options>
-                    <fourteen-bit-lsb/>
+                    <script-binding/>
                 </options>
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 4</description>
                 <status>0x94</status>
                 <midino>0x23</midino>
@@ -839,7 +840,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 5</description>
                 <status>0x94</status>
                 <midino>0x24</midino>
@@ -893,7 +894,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 6</description>
                 <status>0x94</status>
                 <midino>0x25</midino>
@@ -903,7 +904,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 7</description>
                 <status>0x94</status>
                 <midino>0x26</midino>
@@ -963,7 +964,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 8</description>
                 <status>0x94</status>
                 <midino>0x27</midino>
@@ -973,7 +974,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 9</description>
                 <status>0x94</status>
                 <midino>0x28</midino>
@@ -983,7 +984,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 10</description>
                 <status>0x94</status>
                 <midino>0x29</midino>
@@ -993,7 +994,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 11</description>
                 <status>0x94</status>
                 <midino>0x2A</midino>
@@ -1003,7 +1004,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 12</description>
                 <status>0x94</status>
                 <midino>0x2B</midino>
@@ -1013,7 +1014,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 13</description>
                 <status>0x94</status>
                 <midino>0x2C</midino>
@@ -1023,7 +1024,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxPad</key>
+                <key>PioneerDDJFLX10Fx.beatFxSelect</key>
                 <description>BeatFX position 14</description>
                 <status>0x94</status>
                 <midino>0x2D</midino>
@@ -1133,7 +1134,7 @@
             </control>
             <control>
                 <group>[Channel2]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobLSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobLsb</key>
                 <description>Sound Color FX knob LSB CH2</description>
                 <status>0xB6</status>
                 <midino>0x38</midino>
@@ -1143,7 +1144,7 @@
             </control>
             <control>
                 <group>[Channel3]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobLSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobLsb</key>
                 <description>Sound Color FX knob LSB CH3</description>
                 <status>0xB6</status>
                 <midino>0x39</midino>
@@ -1153,7 +1154,7 @@
             </control>
             <control>
                 <group>[Channel4]</group>
-                <key>PioneerDDJFLX10.soundColorFxKnobLSB</key>
+                <key>PioneerDDJFLX10Fx.colorKnobLsb</key>
                 <description>Sound Color FX knob LSB CH4</description>
                 <status>0xB6</status>
                 <midino>0x3A</midino>
@@ -1479,7 +1480,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxOnOff</key>
+                <key>PioneerDDJFLX10Fx.beatFxOnOff</key>
                 <description>BeatFX ON/OFF toggle</description>
                 <status>0x94</status>
                 <midino>0x46</midino>
@@ -1489,7 +1490,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1_Effect1]</group>
-                <key>PioneerDDJFLX10.beatFxOnOff</key>
+                <key>PioneerDDJFLX10Fx.beatFxOnOff</key>
                 <description>BeatFX ON/OFF (non-Serato mode, note 0x47)</description>
                 <status>0x94</status>
                 <midino>0x47</midino>
@@ -2175,7 +2176,7 @@
             <!-- Sound Color FX — exclusive toggle, applies to all channels via QuickEffect -->
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Space (Reverb)</description>
                 <status>0x96</status>
                 <midino>0x00</midino>
@@ -2185,7 +2186,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: D. Echo (Echo)</description>
                 <status>0x96</status>
                 <midino>0x01</midino>
@@ -2195,7 +2196,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Crush (Bitcrusher)</description>
                 <status>0x96</status>
                 <midino>0x02</midino>
@@ -2205,7 +2206,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Pitch (Pitch Shift)</description>
                 <status>0x96</status>
                 <midino>0x03</midino>
@@ -2215,7 +2216,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Noise (White Noise)</description>
                 <status>0x96</status>
                 <midino>0x04</midino>
@@ -2225,7 +2226,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Filter (Filter)</description>
                 <status>0x96</status>
                 <midino>0x05</midino>
@@ -2415,7 +2416,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Space deselect (note-off)</description>
                 <status>0x86</status>
                 <midino>0x00</midino>
@@ -2425,7 +2426,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: D.Echo deselect (note-off)</description>
                 <status>0x86</status>
                 <midino>0x01</midino>
@@ -2435,7 +2436,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Crush deselect (note-off)</description>
                 <status>0x86</status>
                 <midino>0x02</midino>
@@ -2445,7 +2446,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Pitch deselect (note-off)</description>
                 <status>0x86</status>
                 <midino>0x03</midino>
@@ -2455,7 +2456,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Noise deselect (note-off)</description>
                 <status>0x86</status>
                 <midino>0x04</midino>
@@ -2465,7 +2466,7 @@
             </control>
             <control>
                 <group>[Master]</group>
-                <key>PioneerDDJFLX10.soundColorFx</key>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
                 <description>Sound Color FX: Filter deselect (note-off)</description>
                 <status>0x86</status>
                 <midino>0x05</midino>
@@ -14325,7 +14326,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10Extras.beatDown</key>
+                <key>PioneerDDJFLX10Fx.beatDown</key>
                 <description>BEAT &lt;</description>
                 <status>0x94</status>
                 <midino>0x4A</midino>
@@ -14335,7 +14336,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10Extras.beatUp</key>
+                <key>PioneerDDJFLX10Fx.beatUp</key>
                 <description>BEAT &gt;</description>
                 <status>0x94</status>
                 <midino>0x4B</midino>
@@ -14345,7 +14346,7 @@
             </control>
             <control>
                 <group>[EffectRack1_EffectUnit1]</group>
-                <key>PioneerDDJFLX10Extras.releaseFx</key>
+                <key>PioneerDDJFLX10Fx.releaseFx</key>
                 <description>SHIFT + BEAT FX ON/OFF: Release FX</description>
                 <status>0x94</status>
                 <midino>0x43</midino>
@@ -14949,6 +14950,146 @@
                 <description>EQ / Part ISO knob CH4</description>
                 <status>0xB3</status>
                 <midino>0x2F</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[EffectRack1_EffectUnit1]</group>
+                <key>PioneerDDJFLX10Fx.bpmAuto</key>
+                <description>SHIFT + BEAT &lt;: Beat FX tempo AUTO</description>
+                <status>0x94</status>
+                <midino>0x66</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[EffectRack1_EffectUnit1]</group>
+                <key>PioneerDDJFLX10Fx.bpmTap</key>
+                <description>SHIFT + BEAT &gt;: Beat FX tempo TAP</description>
+                <status>0x94</status>
+                <midino>0x6B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX SPACE (on)</description>
+                <status>0x96</status>
+                <midino>0x08</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX SPACE (off)</description>
+                <status>0x86</status>
+                <midino>0x08</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX D.ECHO (on)</description>
+                <status>0x96</status>
+                <midino>0x09</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX D.ECHO (off)</description>
+                <status>0x86</status>
+                <midino>0x09</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX CRUSH (on)</description>
+                <status>0x96</status>
+                <midino>0x0A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX CRUSH (off)</description>
+                <status>0x86</status>
+                <midino>0x0A</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX PITCH (on)</description>
+                <status>0x96</status>
+                <midino>0x0B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX PITCH (off)</description>
+                <status>0x86</status>
+                <midino>0x0B</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX NOISE (on)</description>
+                <status>0x96</status>
+                <midino>0x0C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX NOISE (off)</description>
+                <status>0x86</status>
+                <midino>0x0C</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX FILTER (on)</description>
+                <status>0x96</status>
+                <midino>0x0D</midino>
+                <options>
+                    <script-binding/>
+                </options>
+            </control>
+            <control>
+                <group>[Master]</group>
+                <key>PioneerDDJFLX10Fx.soundColorFx</key>
+                <description>SHIFT + SOUND COLOR FX FILTER (off)</description>
+                <status>0x86</status>
+                <midino>0x0D</midino>
                 <options>
                     <script-binding/>
                 </options>

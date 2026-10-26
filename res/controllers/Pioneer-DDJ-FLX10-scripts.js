@@ -272,6 +272,7 @@ PioneerDDJFLX10.init = function(id) {
     PioneerDDJFLX10Pads.init();
     PioneerDDJFLX10MixPoint.init();
     PioneerDDJFLX10Extras.init();
+    PioneerDDJFLX10Fx.init();
 
     // Loop in/out button LEDs (blink while setting/adjusting, solid when active)
     PioneerDDJFLX10._initLoopLeds();
@@ -422,6 +423,7 @@ PioneerDDJFLX10.shutdown = function() {
     PioneerDDJFLX10Pads.shutdown();
     PioneerDDJFLX10MixPoint.shutdown();
     PioneerDDJFLX10Extras.shutdown();
+    PioneerDDJFLX10Fx.shutdown();
     if (typeof PioneerDDJFLX10.screen !== "undefined") {
         PioneerDDJFLX10.screen.stop();
     }
@@ -664,27 +666,6 @@ PioneerDDJFLX10.shiftHandler = function(channel, control, value, status, group) 
     
     // Detect double-click (within 300ms)
     PioneerDDJFLX10._lastShiftPress = now;
-};
-
-// Whether the BeatFX ON button is currently active
-PioneerDDJFLX10._beatFxActive = false;
-PioneerDDJFLX10._beatFxFadeTimer = 0;
-
-// Last activated preset position (so ON button can re-apply it)
-PioneerDDJFLX10._lastPreset = null;
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// BeatFX pad handler — pad positions 1–14 map directly to the first 14 chain
-// presets in Mixxx Preferences → Effects (in list order). Configure your
-// presets there to match the 14 BEAT FX labels printed on the controller.
-// ─────────────────────────────────────────────────────────────────────────────
-PioneerDDJFLX10.beatFxPad = function(channel, control, value, status, group) {
-    if (value === 0) return;
-    var position = control - 0x20 + 1;
-    if (position < 1 || position > 14) return;
-    engine.setValue("[EffectRack1_EffectUnit1]", "loaded_chain_preset", position);
-    PioneerDDJFLX10._lastPreset = position;
 };
 
 // Reverse with slip mode management
@@ -1097,98 +1078,11 @@ PioneerDDJFLX10._initAdvancedLeds = PioneerDDJFLX10._initAdvancedLeds || functio
   [1,2,3,4].forEach(PioneerDDJFLX10._connectAdvanced);
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BeatFX Effect Scanner (diagnostic tool)
-//
-// Press SHIFT + BeatFX ON button to start the scan.
-// Open Developer Tools → Log tab and watch the FX panel at the same time.
-// Every 2.5 seconds a new effect loads and its index is printed to the log.
-// Write down which effect name in the FX panel matches each index number.
-// Press SHIFT + BeatFX ON again to stop early.
-// ─────────────────────────────────────────────────────────────────────────────
-PioneerDDJFLX10._scanIdx = 0;
-PioneerDDJFLX10._scanTimer = null;
-
-PioneerDDJFLX10._beatFxScanStart = function() {
-    if (PioneerDDJFLX10._scanTimer) {
-        engine.stopTimer(PioneerDDJFLX10._scanTimer);
-        PioneerDDJFLX10._scanTimer = null;
-        console.log("BeatFX Scan: stopped.");
-        return;
-    }
-    var g = "[EffectRack1_EffectUnit1_Effect1]";
-    for (var i = 0; i < 30; i++) { engine.setValue(g, "effect_selector", -1); }
-    PioneerDDJFLX10._scanIdx = 0;
-    console.log("BeatFX Scan: started — watch this Log tab + the FX panel");
-    console.log("BeatFX Scan: Index 0");
-
-    PioneerDDJFLX10._scanTimer = engine.beginTimer(2500, function() {
-        PioneerDDJFLX10._scanIdx++;
-        engine.setValue("[EffectRack1_EffectUnit1_Effect1]", "effect_selector", 1);
-        console.log("BeatFX Scan: Index " + PioneerDDJFLX10._scanIdx);
-        if (PioneerDDJFLX10._scanIdx >= 25) {
-            engine.stopTimer(PioneerDDJFLX10._scanTimer);
-            PioneerDDJFLX10._scanTimer = null;
-            console.log("BeatFX Scan: complete.");
-        }
-    });
-};
-
 // Key Sync handler (protégé par SHIFT)
 PioneerDDJFLX10.syncKeyHandler = function(channel, control, value, status, group) {
     if (value !== 0x7F) return;
     if (PioneerDDJFLX10.shiftActive) return; // ignore si SHIFT
     engine.setValue(group, "key_sync", 1);
-};
-
-// BeatFX ON/OFF — toggles the 3 effect slots on/off.
-// SHIFT + ON/OFF triggers the effect index scan (prints to Log tab).
-PioneerDDJFLX10.beatFxOnOff = function(channel, control, value, status, group) {
-    // In non-Serato mode this button is a PULSE: a single press fires a Note ON
-    // immediately followed by a Note OFF. Toggle on the press (Note ON) and
-    // ignore the release (Note OFF), so one press = one on/off change instead of
-    // flashing on then straight back off. (The 2.6/Serato mapping uses a
-    // hold-to-activate variant because there the button is a true momentary.)
-    if (value === 0) return;
-    if (PioneerDDJFLX10.shiftActive) {
-        PioneerDDJFLX10._beatFxScanStart();
-        return;
-    }
-    PioneerDDJFLX10._beatFxActive = !PioneerDDJFLX10._beatFxActive;
-    var on = PioneerDDJFLX10._beatFxActive;
-    for (var slot = 1; slot <= 3; slot++) {
-        engine.setValue("[EffectRack1_EffectUnit1_Effect" + slot + "]", "enabled", on ? 1 : 0);
-        if (on) {
-            engine.setValue("[EffectRack1_EffectUnit1_Effect" + slot + "]", "mix", 1.0);
-        }
-    }
-};
-
-// BeatFX channel routing — exclusive: selecting one group clears the others.
-// NOTE: notes 0x10-0x16 on 0x93 may conflict with existing CH4 loop/transport
-// mappings. Verify by pressing deck 4 Loop In and checking which MIDI note fires.
-PioneerDDJFLX10._beatFxRouteGroups = ["[Channel1]", "[Channel2]", "[Channel3]", "[Channel4]", "[Master]", "[Microphone]"];
-
-PioneerDDJFLX10._beatFxNoteToGroup = {
-    0x10: "[Channel1]",
-    0x11: "[Channel2]",
-    0x12: "[Channel3]",
-    0x13: "[Channel4]",
-    0x14: "[Master]",
-    0x15: "[Microphone]",
-    0x16: null,          // SP — no direct Mixxx group equivalent
-};
-
-PioneerDDJFLX10.beatFxChannelSelect = function(channel, control, value, status, group) {
-    if (value === 0) return;
-    var target = PioneerDDJFLX10._beatFxNoteToGroup[control];
-    var groups = PioneerDDJFLX10._beatFxRouteGroups;
-    for (var i = 0; i < groups.length; i++) {
-        engine.setValue("[EffectRack1_EffectUnit1]", "group_" + groups[i] + "_enable", 0);
-    }
-    if (target) {
-        engine.setValue("[EffectRack1_EffectUnit1]", "group_" + target + "_enable", 1);
-    }
 };
 
 // Crossfader assign — A (left), THRU (center), B (right) per channel.
@@ -1205,82 +1099,6 @@ PioneerDDJFLX10.crossfaderAssign = function(channel, control, value, status, gro
     if (orientation !== undefined) {
         engine.setValue(group, "orientation", orientation);
     }
-};
-
-// Sound Color FX — exclusive toggle across all 4 channels via QuickEffect.
-// Preset indices match the "Quick Effect Chain Presets" list order in Mixxx settings.
-PioneerDDJFLX10._colorFxActive = -1;
-PioneerDDJFLX10._colorFxChannels = ["[Channel1]", "[Channel2]", "[Channel3]", "[Channel4]"];
-PioneerDDJFLX10._colorFxNoteToPreset = {
-    0: 17,  // Space   → Reverb
-    1: 10,  // D. Echo → Echo
-    2: 8,   // Crush   → Bitcrusher
-    3: 16,  // Pitch   → Pitch Shift
-    4: 19,  // Noise   → White Noise
-    5: 11   // Filter  → Filter
-};
-
-PioneerDDJFLX10.soundColorFx = function(channel, control, value, status, group) {
-    var channels = PioneerDDJFLX10._colorFxChannels;
-    var i;
-    // One Sound Color FX selector shared by all decks. Radio-style latching
-    // buttons: Note ON = preset selected, Note OFF = preset deselected. Switching
-    // A→B sends A's Note OFF then B's Note ON, so the Note-OFF handler only acts
-    // when that preset is STILL the active one — otherwise A's off would wipe the
-    // B load that just happened. A lone Note OFF (deselect) loads the empty
-    // '----' preset (index 0 = "no effect") on all decks, so the FX shows nothing.
-    var on = ((status & 0xF0) === 0x90) && (value > 0);
-    if (!on) {
-        if (PioneerDDJFLX10._colorFxActive === control) {
-            for (i = 0; i < channels.length; i++) {
-                engine.setValue("[QuickEffectRack1_" + channels[i] + "]", "loaded_chain_preset", 0);
-                PioneerDDJFLX10._loadStemColorFx(i + 1, 0);
-            }
-            PioneerDDJFLX10._colorFxActive = -1;
-        }
-    } else {
-        var preset = PioneerDDJFLX10._colorFxNoteToPreset[control];
-        for (i = 0; i < channels.length; i++) {
-            engine.setValue("[QuickEffectRack1_" + channels[i] + "]", "loaded_chain_preset", preset);
-            engine.setValue("[QuickEffectRack1_" + channels[i] + "_Effect1]", "enabled", 1);
-            PioneerDDJFLX10._loadStemColorFx(i + 1, preset);
-        }
-        // Loading a preset resets super1; the COLOR knobs are the only
-        // control for it, so put back where each knob physically is.
-        engine.beginTimer(50, function() {
-            for (var d = 1; d <= 4; d++) {
-                PioneerDDJFLX10._applyColorFxKnob(d, PioneerDDJFLX10._colorFxKnobPosition[d]);
-            }
-        }, true);
-        PioneerDDJFLX10._colorFxActive = control;
-    }
-};
-
-// Sound Color FX intensity knob — 14-bit absolute encoder, per-channel state.
-// CC 0x17 (MSB) arrives first; CC 0x37 (LSB) completes the pair and drives the write.
-// Keyed by deck number (1–4).
-PioneerDDJFLX10._colorFxKnobMSB      = {1: 63,   2: 63,   3: 63,   4: 63};
-PioneerDDJFLX10._colorFxKnobPosition = {1: 0.5,  2: 0.5,  3: 0.5,  4: 0.5};
-
-PioneerDDJFLX10.soundColorFxKnobMSB = function(channel, control, value, status, group) {
-    var deck = PioneerDDJFLX10._getDeckFromGroup(group);
-    PioneerDDJFLX10._colorFxKnobMSB[deck] = value;
-};
-
-PioneerDDJFLX10.soundColorFxKnobLSB = function(channel, control, value, status, group) {
-    var deck = PioneerDDJFLX10._getDeckFromGroup(group);
-    var position = (PioneerDDJFLX10._colorFxKnobMSB[deck] * 128 + value) / 16383.0;
-    PioneerDDJFLX10._colorFxKnobPosition[deck] = position;
-    PioneerDDJFLX10._applyColorFxKnob(deck, position);
-};
-
-// The COLOR knob is absolute, as in rekordbox: the effect always follows the
-// physical position, also right after another Sound Color FX is chosen.
-PioneerDDJFLX10._applyColorFxKnob = function(deck, position) {
-    if (PioneerDDJFLX10._colorFxOnParts(deck, position)) {
-        return;
-    }
-    engine.setValue("[QuickEffectRack1_[Channel" + deck + "]]", "super1", position);
 };
 
 // Loop In / Halve and Loop Out / Double.
@@ -1787,9 +1605,7 @@ PioneerDDJFLX10.fxPartSelect = function(channel, control, value, status, group) 
         return;
     }
     PioneerDDJFLX10._fxPartSelected[control] = lit;
-    for (var d = 1; d <= 4; d++) {
-        PioneerDDJFLX10._colorFxOnParts(d, PioneerDDJFLX10._colorFxKnobPosition[d]);
-    }
+    PioneerDDJFLX10Fx.applyColorAll();
 };
 
 PioneerDDJFLX10._selectedStems = function() {
@@ -1803,24 +1619,3 @@ PioneerDDJFLX10._selectedStems = function() {
     return stems;
 };
 
-PioneerDDJFLX10._loadStemColorFx = function(deck, preset) {
-    for (var stem = 1; stem <= 4; stem++) {
-        var rack = "[QuickEffectRack1_" + PioneerDDJFLX10._stemGroup(deck, stem) + "]";
-        engine.setValue(rack, "loaded_chain_preset", preset);
-    }
-};
-
-// Returns true when the knob was applied to stem parts instead of the deck.
-PioneerDDJFLX10._colorFxOnParts = function(deck, position) {
-    var selected = PioneerDDJFLX10._selectedStems();
-    // All three parts lit means the whole track, as with none lit.
-    if (!selected.length || selected.length >= 4 || !PioneerDDJFLX10._hasStems(deck)) {
-        return false;
-    }
-    engine.setValue("[QuickEffectRack1_[Channel" + deck + "]]", "super1", 0.5);
-    for (var stem = 1; stem <= 4; stem++) {
-        var rack = "[QuickEffectRack1_" + PioneerDDJFLX10._stemGroup(deck, stem) + "]";
-        engine.setValue(rack, "super1", selected.indexOf(stem) >= 0 ? position : 0.5);
-    }
-    return true;
-};

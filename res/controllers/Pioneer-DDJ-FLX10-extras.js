@@ -1,9 +1,10 @@
 // rekordbox behaviours of the DDJ-FLX10 that the Operating Instructions
 // describe and that are not in the other script files: Fader Start, Part ISO,
 // Part Instant Doubles, ACTIVE PART solo mode, LOAD (and Instant Doubles),
-// VIEW hold, sampler volume and cue, BEAT < / >, Release FX, SHIFT + BEAT SYNC
-// and the analogue level knobs. Fader start, sampler cue/volume and the
-// headphone mix setting follow the DDJ-1000 mapping (mixxxdj/mixxx#17174).
+// VIEW hold, sampler volume and cue, SHIFT + BEAT SYNC and the analogue level
+// knobs (the FX section is in Pioneer-DDJ-FLX10-fx.js). Fader start, sampler
+// cue/volume and the headphone mix setting follow the DDJ-1000 mapping
+// (mixxxdj/mixxx#17174).
 
 // eslint-disable-next-line no-var
 var PioneerDDJFLX10Extras = {};
@@ -160,42 +161,6 @@ PioneerDDJFLX10Extras.load = function(channel, control, value, status, group) {
 PioneerDDJFLX10Extras.viewHold = function(channel, control, value) {
     if (value) {
         engine.setValue("[Library]", "AutoDjAddBottom", 1);
-    }
-};
-
-// ----- Beat FX ---------------------------------------------------------------
-// BEAT < / >: halve / double the beat length of the Beat FX (parameter 1 of
-// each effect, the time or rate parameter for the beat-synced effects).
-PioneerDDJFLX10Extras.beatStep = function(direction) {
-    return function(channel, control, value) {
-        if (!value) {
-            return;
-        }
-        for (var slot = 1; slot <= 3; slot++) {
-            var g = "[EffectRack1_EffectUnit1_Effect" + slot + "]";
-            if (!engine.getValue(g, "loaded")) {
-                continue;
-            }
-            var p = engine.getParameter(g, "parameter1");
-            engine.setParameter(g, "parameter1", Math.max(0, Math.min(1, p + direction / 16)));
-        }
-    };
-};
-
-PioneerDDJFLX10Extras.beatDown = PioneerDDJFLX10Extras.beatStep(-1);
-PioneerDDJFLX10Extras.beatUp = PioneerDDJFLX10Extras.beatStep(1);
-
-// SHIFT + BEAT FX ON/OFF (Release FX): switch the Beat FX off at once and let
-// the deck tails ring out through Mixxx's effect fade-out.
-PioneerDDJFLX10Extras.releaseFx = function(channel, control, value, status, group) {
-    if (!value) {
-        return;
-    }
-    if (PioneerDDJFLX10._beatFxActive) {
-        PioneerDDJFLX10.beatFxOnOff(channel, 0x47, 0x7F, 0x94, group);
-    }
-    for (var slot = 1; slot <= 3; slot++) {
-        engine.setValue("[EffectRack1_EffectUnit1_Effect" + slot + "]", "enabled", 0);
     }
 };
 
