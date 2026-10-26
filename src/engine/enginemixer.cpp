@@ -735,6 +735,7 @@ void EngineMixer::process(const std::size_t bufferSize) {
         if (m_pEngineEffectsManager) {
             GroupFeatureState mainFeatures;
             mainFeatures.gain = m_pMainGain->get();
+            addMainBusTempo(&mainFeatures);
             m_pEngineEffectsManager->processPostFaderInPlace(
                     m_mainOutputHandle.handle(),
                     m_mainHandle.handle(),
@@ -803,6 +804,7 @@ void EngineMixer::applyMainEffects(std::size_t bufferSize) {
     if (m_pEngineEffectsManager) {
         GroupFeatureState mainFeatures;
         mainFeatures.gain = m_pMainGain->get();
+        addMainBusTempo(&mainFeatures);
         m_pEngineEffectsManager->processPostFaderInPlace(m_mainHandle.handle(),
                 m_mainHandle.handle(),
                 m_main.data(),
@@ -811,6 +813,20 @@ void EngineMixer::applyMainEffects(std::size_t bufferSize) {
                 mainFeatures,
                 CSAMPLE_GAIN_ONE,
                 CSAMPLE_GAIN_ONE);
+    }
+}
+
+// The main bus has no tempo of its own. Beat-synced effects on it follow the
+// first playing channel with a tempo; the sync leader, when it plays, is the
+// first entry (the entry is null otherwise).
+void EngineMixer::addMainBusTempo(GroupFeatureState* pFeatures) {
+    for (const ChannelInfo* pChannelInfo : std::as_const(m_activeChannels)) {
+        if (pChannelInfo && pChannelInfo->m_features.beat_length.has_value()) {
+            pFeatures->beat_length = pChannelInfo->m_features.beat_length;
+            pFeatures->beat_fraction_buffer_end =
+                    pChannelInfo->m_features.beat_fraction_buffer_end;
+            return;
+        }
     }
 }
 

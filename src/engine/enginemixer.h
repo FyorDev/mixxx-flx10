@@ -263,6 +263,7 @@ class EngineMixer : public QObject, public AudioSource {
 
     ChannelHandleFactoryPointer m_pChannelHandleFactory;
     void applyMainEffects(std::size_t bufferSize);
+    void addMainBusTempo(GroupFeatureState* pFeatures);
     void processHeadphones(
             const CSAMPLE_GAIN mainMixGainInHeadphones,
             std::size_t bufferSize);
