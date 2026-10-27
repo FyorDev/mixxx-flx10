@@ -356,7 +356,7 @@ PioneerDDJFLX10Screen._POS_GAIN     = 0.05;
 PioneerDDJFLX10Screen._POS_SNAP_MS  = 150;
 PioneerDDJFLX10Screen._pos          = {};
 
-PioneerDDJFLX10Screen._smoothPositionMs = function(deckNum, measuredMs, isPlaying) {
+PioneerDDJFLX10Screen._smoothPositionMs = function(deckNum, measuredMs, isPlaying, rate) {
     var now = Date.now();
     var s = this._pos[deckNum];
     if (s === undefined) {
@@ -380,14 +380,18 @@ PioneerDDJFLX10Screen._smoothPositionMs = function(deckNum, measuredMs, isPlayin
         s.at = now;
         return Math.floor(s.est);
     }
-    var dt = Math.min(Math.max(now - s.at, 0), 50);
+    // Up to half a second: a stalled controller thread should not make the
+    // estimate fall behind and snap.
+    var dt = Math.min(Math.max(now - s.at, 0), 500);
     s.at = now;
-    var predicted = s.est + dt;
-    var err = s.meas + sinceMeas - predicted;
+    var predicted = s.est + dt * rate;
+    var err = s.meas + sinceMeas * rate - predicted;
     if (Math.abs(err) > this._POS_SNAP_MS) {
-        s.est = s.meas + sinceMeas;
-    } else {
+        s.est = s.meas + sinceMeas * rate;
+    } else if (rate >= 0) {
         s.est = Math.max(s.est, predicted + err * this._POS_GAIN);
+    } else {
+        s.est = Math.min(s.est, predicted + err * this._POS_GAIN);
     }
     return Math.floor(s.est);
 };
@@ -780,14 +784,13 @@ PioneerDDJFLX10Screen._buildState = function(deckByte, trackLoaded) {
             p[15] = 0x01;
         }
 
-        // [9..12] = WALL duration = file_duration / rate_ratio.
+        // [9..12] = track duration, in the same track time as the position
+        // (it was duration / rate_ratio, which moved the wave with tempo).
         // FLOOR (truncate) sub-sec to tenths. Math.round in JS rounds X.5 UP
         // (Math.round(0.5)==1) which would add a 50-100ms bias for any track
         // whose sub-sec is in the .X50..X99 range. Floor truncates cleanly.
         if (duration > 0) {
-            var rrForDur = rateRatio > 0 ? rateRatio : 1.0;
-            var wallDurSec = duration / rrForDur;
-            var totalMsDur = Math.floor(wallDurSec * 1000);
+            var totalMsDur = Math.floor(duration * 1000);
             var minutesD = Math.floor(totalMsDur / 60000);
             var remMsD   = totalMsDur % 60000;
             var secondsD = Math.floor(remMsD / 1000);
@@ -828,11 +831,14 @@ PioneerDDJFLX10Screen._buildState = function(deckByte, trackLoaded) {
             if (pClampedP < 0.0) pClampedP = 0.0;
             if (pClampedP > 1.0) pClampedP = 1.0;
             var rrForPos = rateRatio > 0 ? rateRatio : 1.0;
+            // Track time, not wall time: the waveform entries are indexed by
+            // track time, so wall time drifts from it at any tempo other than
+            // 0 % and jumps whenever the tempo fader moves.
             var fileElapsedSec = duration * pClampedP;
-            var wallElapsedSec = fileElapsedSec / rrForPos;
             var isPlaying = engine.getValue(group, "play") > 0;
 
-            var smoothMs = this._smoothPositionMs(deckNum, wallElapsedSec * 1000, isPlaying);
+            var smoothMs = this._smoothPositionMs(deckNum, fileElapsedSec * 1000, isPlaying,
+                engine.getValue(group, "reverse") > 0 ? -rrForPos : rrForPos);
             // 2026-05-29: bytes 5/6/7/8 form a co-encoded position field
             //   T = b5*60 + b6 + (b8*256 + b7) / 1024
             // where T is wall-time elapsed seconds. Validated zero-violation
