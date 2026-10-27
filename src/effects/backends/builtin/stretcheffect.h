@@ -29,6 +29,8 @@ class StretchGroupState : public EffectState {
         started = false;
         readPosition = 0;
         framesSinceTrigger = 0;
+        cycle = 0;
+        beatClock.reset();
     }
 
     mixxx::beatfx::StereoRing ring;
@@ -36,6 +38,9 @@ class StretchGroupState : public EffectState {
     bool started;
     double readPosition;
     int64_t framesSinceTrigger;
+    // Retrigger period counted on the beat grid, when there is one.
+    double cycle;
+    mixxx::beatfx::BeatClock beatClock;
     Grain grains[2];
 };
 

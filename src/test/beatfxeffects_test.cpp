@@ -6,6 +6,7 @@
 
 #include "effects/backends/builtin/barberpoleflangereffect.h"
 #include "effects/backends/builtin/beatdelayeffect.h"
+#include "effects/backends/builtin/beatfxdsp.h"
 #include "effects/backends/builtin/filterednoiseeffect.h"
 #include "effects/backends/builtin/shepardtoneeffect.h"
 #include "effects/backends/builtin/stretcheffect.h"
@@ -44,6 +45,12 @@ class Harness {
     std::vector<CSAMPLE> process(const std::vector<CSAMPLE>& input) {
         std::vector<CSAMPLE> output(input.size());
         for (std::size_t i = 0; i < input.size(); i += kFrames * 2) {
+            m_processedFrames += kFrames;
+            if (m_beatAtStart >= 0) {
+                const double beats = m_beatAtStart +
+                        m_processedFrames / static_cast<double>(kSampleRate) / kBeatSeconds;
+                m_features.beat_fraction_buffer_end = beats - std::floor(beats);
+            }
             m_effect.processChannel(&m_state,
                     input.data() + i,
                     output.data() + i,
@@ -55,8 +62,12 @@ class Harness {
     }
 
     GroupFeatureState m_features;
+    // Position in the beat at the start, to simulate a beat grid; -1 = none.
+    double m_beatAtStart = -1;
 
   private:
+    SINT m_processedFrames = 0;
+
     EffectManifestPointer m_pManifest;
     mixxx::EngineParameters m_parameters;
     Effect m_effect;
@@ -191,6 +202,46 @@ TEST(BeatFxEffectsTest, StretchPlaysTheStartSlower) {
     const auto output = stretch.process(input);
     const auto at = static_cast<std::size_t>(0.3 * kSampleRate) * 2;
     EXPECT_GT(rms(output, at, at + 2000), 0.05);
+}
+
+TEST(BeatFxEffectsTest, BeatClockCountsBeatsAcrossTheGrid) {
+    mixxx::beatfx::BeatClock clock;
+    GroupFeatureState features;
+    double start = 0;
+    double end = 0;
+    EXPECT_FALSE(clock.advance(features, &start, &end));
+    features.beat_fraction_buffer_end = 0.9;
+    ASSERT_TRUE(clock.advance(features, &start, &end));
+    EXPECT_DOUBLE_EQ(0.9, end);
+    features.beat_fraction_buffer_end = 0.1;
+    ASSERT_TRUE(clock.advance(features, &start, &end));
+    EXPECT_DOUBLE_EQ(0.9, start);
+    EXPECT_NEAR(1.1, end, 1e-12);
+    // Reverse play runs the fraction backwards over the beat.
+    features.beat_fraction_buffer_end = 0.95;
+    ASSERT_TRUE(clock.advance(features, &start, &end));
+    EXPECT_NEAR(0.95, end, 1e-12);
+}
+
+TEST(BeatFxEffectsTest, StretchRetriggersOnTheBeat) {
+    Harness<StretchEffect, StretchGroupState> stretch;
+    stretch.set("stretch", 4.0);
+    stretch.set("retrigger", 1.0);
+    // Switched on halfway through a beat; the input level steps up every beat.
+    stretch.m_beatAtStart = 0.5;
+    auto input = sine(1.5, 440, 0.1f);
+    const auto beatOneFrame = static_cast<std::size_t>(0.5 * kBeatSeconds * kSampleRate);
+    for (std::size_t frame = beatOneFrame; frame < input.size() / 2; ++frame) {
+        input[frame * 2] *= 3.0f;
+        input[frame * 2 + 1] *= 3.0f;
+    }
+    const auto output = stretch.process(input);
+    // Shortly after the next beat it plays the new beat, not the stretched
+    // half beat it was switched on in (a free-running retrigger would wait
+    // a whole beat from switch-on).
+    const std::size_t from = (beatOneFrame + 2048) * 2;
+    const std::size_t to = (beatOneFrame + static_cast<std::size_t>(0.2 * kSampleRate)) * 2;
+    EXPECT_GT(rms(output, from, to), 0.15);
 }
 
 TEST(BeatFxEffectsTest, FilteredNoiseLevelAndFilter) {

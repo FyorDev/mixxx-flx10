@@ -97,8 +97,18 @@ void BarberpoleFlangerEffect::processChannel(
     const RampingValue<CSAMPLE_GAIN> depth(pState->prevDepth, depthCurrent, frames);
     const double minDelay = kMinDelaySeconds * sampleRate;
     const double sweep = (kMaxDelaySeconds - kMinDelaySeconds) * sampleRate;
+    // With a beat grid the sweep follows the beats, so it starts on a beat
+    // and stays in time when the tempo changes.
+    double startBeats = 0;
+    double endBeats = 0;
+    const bool onBeat = pState->beatClock.advance(groupFeatures, &startBeats, &endBeats);
+    const double periodBeats = m_pPeriodParameter->value();
 
     for (SINT frame = 0; frame < frames; ++frame) {
+        if (onBeat) {
+            const double beats = startBeats + (endBeats - startBeats) * frame / frames;
+            pState->phase = beats / periodBeats - std::floor(beats / periodBeats);
+        }
         CSAMPLE sweptLeft = 0;
         CSAMPLE sweptRight = 0;
         for (int voice = 0; voice < 2; ++voice) {
@@ -125,9 +135,11 @@ void BarberpoleFlangerEffect::processChannel(
         pState->ring.write(SampleUtil::clampSample(pInput[i] + sweptLeft * regen),
                 SampleUtil::clampSample(pInput[i + 1] + sweptRight * regen));
 
-        pState->phase += phasePerFrame;
-        if (pState->phase >= 1.0) {
-            pState->phase -= 1.0;
+        if (!onBeat) {
+            pState->phase += phasePerFrame;
+            if (pState->phase >= 1.0) {
+                pState->phase -= 1.0;
+            }
         }
     }
 

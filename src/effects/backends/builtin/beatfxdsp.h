@@ -21,6 +21,49 @@ inline double beatSeconds(const GroupFeatureState& groupFeatures) {
     return 0.5;
 }
 
+// Counts beats from the beat grid (beat_fraction_buffer_end), so periodic
+// effects stay locked to the track's beats instead of a free-running clock.
+class BeatClock {
+  public:
+    void reset() {
+        m_valid = false;
+        m_beats = 0;
+        m_lastFraction = 0;
+    }
+
+    // Beats at the start and end of this buffer, counted from the beat the
+    // effect started in. False without a beat grid.
+    bool advance(const GroupFeatureState& groupFeatures, double* pStart, double* pEnd) {
+        if (!groupFeatures.beat_fraction_buffer_end.has_value()) {
+            m_valid = false;
+            return false;
+        }
+        const double fraction = *groupFeatures.beat_fraction_buffer_end;
+        if (!m_valid) {
+            m_valid = true;
+            m_beats = fraction;
+            m_lastFraction = fraction;
+        }
+        double delta = fraction - m_lastFraction;
+        // Crossing a beat wraps the fraction; reverse play runs it backwards.
+        if (delta < -0.5) {
+            delta += 1;
+        } else if (delta > 0.5) {
+            delta -= 1;
+        }
+        m_lastFraction = fraction;
+        *pStart = m_beats;
+        m_beats += delta;
+        *pEnd = m_beats;
+        return true;
+    }
+
+  private:
+    bool m_valid = false;
+    double m_beats = 0;
+    double m_lastFraction = 0;
+};
+
 // RBJ cookbook low/high pass, transposed direct form II.
 class Biquad {
   public:

@@ -20,11 +20,13 @@ class BarberpoleFlangerGroupState : public EffectState {
         ring.clear();
         phase = 0;
         prevDepth = 0;
+        beatClock.reset();
     }
 
     mixxx::beatfx::StereoRing ring;
     double phase;
     CSAMPLE_GAIN prevDepth;
+    mixxx::beatfx::BeatClock beatClock;
 };
 
 /// Flanger whose notches keep rising or falling: two delay taps sweep the

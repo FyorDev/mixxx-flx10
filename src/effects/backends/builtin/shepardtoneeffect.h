@@ -3,6 +3,7 @@
 #include <QMap>
 #include <array>
 
+#include "effects/backends/builtin/beatfxdsp.h"
 #include "effects/backends/effectprocessor.h"
 #include "util/class.h"
 
@@ -20,12 +21,14 @@ class ShepardToneGroupState : public EffectState {
         shift = 0;
         oscillatorPhase.fill(0);
         prevLevel = 0;
+        beatClock.reset();
     }
 
     // Position of the lowest voice within its octave, 0..1.
     double shift;
     std::array<double, kVoices> oscillatorPhase;
     CSAMPLE_GAIN prevLevel;
+    mixxx::beatfx::BeatClock beatClock;
 };
 
 /// Endlessly rising or falling tone (Shepard-Risset glissando) of saw or

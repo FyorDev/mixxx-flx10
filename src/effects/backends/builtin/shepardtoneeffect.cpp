@@ -111,7 +111,15 @@ void ShepardToneEffect::processChannel(
     const double periodSeconds = m_pPeriodParameter->value() *
             mixxx::beatfx::beatSeconds(groupFeatures);
     const double direction = m_pFallingParameter->toBool() ? -1.0 : 1.0;
-    const double shiftPerFrame = direction / (periodSeconds * sampleRate);
+    double shiftPerFrame = direction / (periodSeconds * sampleRate);
+    // With a beat grid the glide moves one octave per `period` beats of the
+    // track, staying in time when the tempo changes.
+    double startBeats = 0;
+    double endBeats = 0;
+    if (pState->beatClock.advance(groupFeatures, &startBeats, &endBeats)) {
+        shiftPerFrame = direction * (endBeats - startBeats) /
+                m_pPeriodParameter->value() / static_cast<double>(frames);
+    }
     const bool triangle = m_pTriangleParameter->toBool();
     const auto levelCurrent = static_cast<CSAMPLE_GAIN>(m_pLevelParameter->value());
     const RampingValue<CSAMPLE_GAIN> level(pState->prevLevel, levelCurrent, frames);

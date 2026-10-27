@@ -73,12 +73,25 @@ void StretchEffect::processChannel(
     const auto retriggerFrames = std::max<int64_t>(grainFrames,
             static_cast<int64_t>(retriggerSeconds * sampleRate));
     const double speed = 1.0 / std::max(1.0, m_pStretchParameter->value());
+    // With a beat grid the recording starts over on the beats, every
+    // `retrigger` beats of the track.
+    double startBeats = 0;
+    double endBeats = 0;
+    const bool onBeat = pState->beatClock.advance(groupFeatures, &startBeats, &endBeats);
+    const double retriggerBeats = m_pRetriggerParameter->value();
 
     for (SINT frame = 0; frame < frames; ++frame) {
         const SINT i = frame * 2;
         pState->ring.write(pInput[i], pInput[i + 1]);
 
-        if (!pState->started || pState->framesSinceTrigger >= retriggerFrames) {
+        bool retrigger = pState->framesSinceTrigger >= retriggerFrames;
+        if (onBeat) {
+            const double beats = startBeats + (endBeats - startBeats) * frame / frames;
+            const double cycle = std::floor(beats / retriggerBeats);
+            retrigger = pState->started && cycle != pState->cycle;
+            pState->cycle = cycle;
+        }
+        if (!pState->started || retrigger) {
             // Start over from the newest frame; the second grain starts half
             // a grain earlier so the two windows overlap from the first frame.
             const auto now = static_cast<double>(pState->ring.written() - 1);
