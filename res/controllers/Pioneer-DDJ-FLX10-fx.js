@@ -11,7 +11,6 @@ var PioneerDDJFLX10Fx = {};
 PioneerDDJFLX10Fx.UNIT = "[EffectRack1_EffectUnit1]";
 PioneerDDJFLX10Fx.DRY_SLASH_WET = 0;
 PioneerDDJFLX10Fx.DRY_PLUS_WET = 1;
-PioneerDDJFLX10Fx.MAX_SLOTS = 3;
 PioneerDDJFLX10Fx.LED_ON = 0x7F;
 PioneerDDJFLX10Fx.BLINK_MS = 500;
 PioneerDDJFLX10Fx.TAP_TIMEOUT_MS = 2000;
@@ -198,8 +197,15 @@ PioneerDDJFLX10Fx.available = function() {
 
 // Loads the chain built by a Beat FX or Sound Color FX into a rack. Slots the
 // chain does not use are switched off but keep their effect.
+PioneerDDJFLX10Fx.slotCount = function(rack) {
+    return engine.getValue(rack, "num_effectslots") || 4;
+};
+
+// Slots the chain does not use are emptied: an effect left there from a
+// preset (e.g. the echo of "Smooth Growl" in slot 3) would keep playing
+// next to the chosen FX.
 PioneerDDJFLX10Fx.loadChain = function(rack, chain, loadedIds, enabled, reload) {
-    for (var n = 1; n <= PioneerDDJFLX10Fx.MAX_SLOTS; n++) {
+    for (var n = 1; n <= PioneerDDJFLX10Fx.slotCount(rack); n++) {
         var group = PioneerDDJFLX10Fx.slotGroup(rack, n);
         var slot = chain.slots[n - 1];
         if (slot) {
@@ -207,7 +213,7 @@ PioneerDDJFLX10Fx.loadChain = function(rack, chain, loadedIds, enabled, reload) 
             loadedIds[n] = slot[0];
             engine.setValue(group, "enabled", enabled ? 1 : 0);
         } else if (loadedIds[n] !== null) {
-            engine.setValue(group, "enabled", 0);
+            engine.setValue(group, "clear", 1);
             loadedIds[n] = null;
         }
     }
@@ -454,6 +460,16 @@ PioneerDDJFLX10Fx.selectBeatFx = function(index) {
         PioneerDDJFLX10Fx.startRoll();
     }
     PioneerDDJFLX10Fx.applyBeatFx(true);
+    PioneerDDJFLX10Fx.logBeatFx();
+};
+
+PioneerDDJFLX10Fx.logBeatFx = function() {
+    var fx = PioneerDDJFLX10Fx.currentBeatFx();
+    var value = PioneerDDJFLX10Fx.currentBeats();
+    var text = fx.steps === PioneerDDJFLX10Fx.REVERB_SIZES
+        ? Math.round(value * 100) + " %" : value + " beats";
+    console.log("DDJ-FLX10 Beat FX: " + fx.name + ", " + text +
+        (PioneerDDJFLX10Fx.beat.tapBpm ? ", TAP " + Math.round(PioneerDDJFLX10Fx.beat.tapBpm) + " BPM" : ""));
 };
 
 PioneerDDJFLX10Fx.beatStep = function(direction) {
@@ -466,6 +482,7 @@ PioneerDDJFLX10Fx.beatStep = function(direction) {
         PioneerDDJFLX10Fx.startRoll();
     }
     PioneerDDJFLX10Fx.applyBeatFx();
+    PioneerDDJFLX10Fx.logBeatFx();
 };
 
 PioneerDDJFLX10Fx.beatDown = function(channel, control, value) {
@@ -668,7 +685,7 @@ PioneerDDJFLX10Fx.applyColorRack = function(rack, position) {
     if (color.active < 0) {
         // Only switch off what a Sound Color FX loaded; a quick effect the
         // user chose in Mixxx stays as it is.
-        for (var n = 1; n <= PioneerDDJFLX10Fx.MAX_SLOTS; n++) {
+        for (var n = 1; n <= PioneerDDJFLX10Fx.slotCount(rack); n++) {
             if (ids[n]) {
                 engine.setValue(PioneerDDJFLX10Fx.slotGroup(rack, n), "enabled", 0);
             }
