@@ -14,7 +14,6 @@ PioneerDDJFLX10Fx.DRY_PLUS_WET = 1;
 PioneerDDJFLX10Fx.MAX_SLOTS = 3;
 PioneerDDJFLX10Fx.LED_ON = 0x7F;
 PioneerDDJFLX10Fx.BLINK_MS = 500;
-PioneerDDJFLX10Fx.RELEASE_BEATS = 4;
 PioneerDDJFLX10Fx.TAP_TIMEOUT_MS = 2000;
 
 PioneerDDJFLX10Fx.ID = {
@@ -55,7 +54,7 @@ PioneerDDJFLX10Fx.REVERB_SIZES = [0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 
 // effects as [id, {parameterId: value}].
 PioneerDDJFLX10Fx.BEAT_FX = [
     {
-        name: "LOW CUT ECHO", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 3, tail: true,
+        name: "LOW CUT ECHO", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 3,
         build: function(b, level) {
             return {mode: PioneerDDJFLX10Fx.DRY_PLUS_WET, mix: level, slots: [
                 [PioneerDDJFLX10Fx.ID.delay, {time: b, feedback: 0.55, taps: 1,
@@ -63,7 +62,7 @@ PioneerDDJFLX10Fx.BEAT_FX = [
         },
     },
     {
-        name: "ECHO", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 3, tail: true,
+        name: "ECHO", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 3,
         build: function(b, level) {
             return {mode: PioneerDDJFLX10Fx.DRY_PLUS_WET, mix: level, slots: [
                 [PioneerDDJFLX10Fx.ID.delay, {time: b, feedback: 0.5, taps: 1,
@@ -71,7 +70,7 @@ PioneerDDJFLX10Fx.BEAT_FX = [
         },
     },
     {
-        name: "MT DELAY", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 5, tail: true,
+        name: "MT DELAY", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 5,
         build: function(b, level) {
             return {mode: PioneerDDJFLX10Fx.DRY_PLUS_WET, mix: level, slots: [
                 [PioneerDDJFLX10Fx.ID.delay, {time: b, feedback: 0.25, taps: 7,
@@ -80,7 +79,7 @@ PioneerDDJFLX10Fx.BEAT_FX = [
     },
     {
         // The delay glides to a new time, so the repeats bend in pitch.
-        name: "SPIRAL", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 3, tail: true,
+        name: "SPIRAL", steps: PioneerDDJFLX10Fx.UP_TO_16, start: 3,
         build: function(b, level) {
             return {mode: PioneerDDJFLX10Fx.DRY_PLUS_WET, mix: level, slots: [
                 [PioneerDDJFLX10Fx.ID.delay, {time: b, feedback: 0.45 + 0.45 * level,
@@ -183,7 +182,8 @@ PioneerDDJFLX10Fx.beat = {
     savedLoopSize: {},
     blinkTimer: 0,
     blinkLit: false,
-    releaseTimer: 0,
+    selectTimer: 0,
+    pendingFx: 1,
     tapBpm: 0,
     taps: [],
 };
@@ -198,12 +198,12 @@ PioneerDDJFLX10Fx.available = function() {
 
 // Loads the chain built by a Beat FX or Sound Color FX into a rack. Slots the
 // chain does not use are switched off but keep their effect.
-PioneerDDJFLX10Fx.loadChain = function(rack, chain, loadedIds, enabled) {
+PioneerDDJFLX10Fx.loadChain = function(rack, chain, loadedIds, enabled, reload) {
     for (var n = 1; n <= PioneerDDJFLX10Fx.MAX_SLOTS; n++) {
         var group = PioneerDDJFLX10Fx.slotGroup(rack, n);
         var slot = chain.slots[n - 1];
         if (slot) {
-            engine.loadEffect(group, slot[0], slot[1]);
+            engine.loadEffect(group, slot[0], slot[1], reload === true);
             loadedIds[n] = slot[0];
             engine.setValue(group, "enabled", enabled ? 1 : 0);
         } else if (loadedIds[n] !== null) {
@@ -286,7 +286,9 @@ PioneerDDJFLX10Fx.applyTapTempo = function(chain) {
     return chain;
 };
 
-PioneerDDJFLX10Fx.applyBeatFx = function() {
+// reload starts the effects afresh, so a new Beat FX that uses the same
+// effect (the delays) does not carry over the repeats of the previous one.
+PioneerDDJFLX10Fx.applyBeatFx = function(reload) {
     var state = PioneerDDJFLX10Fx.beat;
     var fx = PioneerDDJFLX10Fx.currentBeatFx();
     var unit = PioneerDDJFLX10Fx.UNIT;
@@ -301,19 +303,41 @@ PioneerDDJFLX10Fx.applyBeatFx = function() {
     }
     var chain = PioneerDDJFLX10Fx.applyTapTempo(
         fx.build(PioneerDDJFLX10Fx.currentBeats(), state.level));
-    PioneerDDJFLX10Fx.loadChain(unit, chain, state.loadedIds, true);
+    PioneerDDJFLX10Fx.loadChain(unit, chain, state.loadedIds, true, reload);
     engine.setValue(unit, "enabled", state.on ? 1 : 0);
 };
 
+// The stems FX PART SELECT picks on a deck, or null for the whole deck.
+// All three parts lit is the whole track, as with none lit.
+PioneerDDJFLX10Fx.partStems = function(deck) {
+    var selected = PioneerDDJFLX10._selectedStems();
+    if (!selected.length || selected.length >= 4 || !PioneerDDJFLX10._hasStems(deck)) {
+        return null;
+    }
+    return selected;
+};
+
+// With parts selected, the unit is routed to those stems of the target deck
+// (MST: of every deck with stems) instead of the deck or the master.
 PioneerDDJFLX10Fx.routeBeatFx = function() {
     var unit = PioneerDDJFLX10Fx.UNIT;
     var target = PioneerDDJFLX10Fx.beat.target;
+    var anyParts = PioneerDDJFLX10._selectedStems().length > 0;
     var groups = {};
     var d;
+    var stem;
+    var partsOnMaster = false;
     for (d = 1; d <= 4; d++) {
-        groups["[Channel" + d + "]"] = target === String(d);
+        var stems = PioneerDDJFLX10Fx.partStems(d);
+        var deckTargeted = target === String(d) || target === "MST";
+        groups["[Channel" + d + "]"] = target === String(d) && !stems;
+        for (stem = 1; stem <= 4; stem++) {
+            groups[PioneerDDJFLX10._stemGroup(d, stem)] =
+                deckTargeted && stems !== null && stems.indexOf(stem) >= 0;
+        }
+        partsOnMaster = partsOnMaster || (target === "MST" && stems !== null);
     }
-    groups["[Master]"] = target === "MST";
+    groups["[Master]"] = target === "MST" && !(anyParts && partsOnMaster);
     var mics = engine.getValue("[App]", "num_microphones") || 1;
     groups["[Microphone]"] = target === "MIC";
     for (d = 2; d <= mics; d++) {
@@ -371,10 +395,6 @@ PioneerDDJFLX10Fx.setBeatFxLed = function(lit) {
 
 PioneerDDJFLX10Fx.setBeatFxOn = function(on) {
     var state = PioneerDDJFLX10Fx.beat;
-    if (state.releaseTimer) {
-        engine.stopTimer(state.releaseTimer);
-        state.releaseTimer = 0;
-    }
     state.on = on;
     var fx = PioneerDDJFLX10Fx.currentBeatFx();
     if (fx.roll) {
@@ -398,6 +418,10 @@ PioneerDDJFLX10Fx.setBeatFxOn = function(on) {
     }
 };
 
+// The select knob sends every position it passes; only the one it stops on
+// is loaded, so turning it does not run each effect in between.
+PioneerDDJFLX10Fx.SELECT_SETTLE_MS = 80;
+
 PioneerDDJFLX10Fx.beatFxSelect = function(channel, control, value) {
     if (!value) {
         return;
@@ -407,15 +431,29 @@ PioneerDDJFLX10Fx.beatFxSelect = function(channel, control, value) {
         return;
     }
     var state = PioneerDDJFLX10Fx.beat;
-    var wasRoll = PioneerDDJFLX10Fx.currentBeatFx().roll;
-    if (wasRoll && state.on) {
+    state.pendingFx = index;
+    if (state.selectTimer) {
+        engine.stopTimer(state.selectTimer);
+    }
+    state.selectTimer = engine.beginTimer(PioneerDDJFLX10Fx.SELECT_SETTLE_MS, function() {
+        state.selectTimer = 0;
+        PioneerDDJFLX10Fx.selectBeatFx(state.pendingFx);
+    }, true);
+};
+
+PioneerDDJFLX10Fx.selectBeatFx = function(index) {
+    var state = PioneerDDJFLX10Fx.beat;
+    if (index === state.fx) {
+        return;
+    }
+    if (PioneerDDJFLX10Fx.currentBeatFx().roll && state.on) {
         PioneerDDJFLX10Fx.stopRoll();
     }
     state.fx = index;
     if (PioneerDDJFLX10Fx.currentBeatFx().roll && state.on) {
         PioneerDDJFLX10Fx.startRoll();
     }
-    PioneerDDJFLX10Fx.applyBeatFx();
+    PioneerDDJFLX10Fx.applyBeatFx(true);
 };
 
 PioneerDDJFLX10Fx.beatStep = function(direction) {
@@ -479,24 +517,23 @@ PioneerDDJFLX10Fx.beatFxOnOff = function(channel, control, value) {
     }
 };
 
-// SHIFT + BEAT FX ON: Release FX. Delay effects stop taking input and their
-// repeats ring out for a few beats; the others switch off at once.
+// SHIFT + BEAT FX ON: Release FX, the vinyl brake of rekordbox. The Beat FX
+// stops and the decks it was set to slow down to a stop like a record.
+PioneerDDJFLX10Fx.BRAKE_FACTOR = 1.0;
+
 PioneerDDJFLX10Fx.releaseFx = function(channel, control, value) {
-    var state = PioneerDDJFLX10Fx.beat;
-    if (!value || !state.on) {
+    if (!value) {
         return;
     }
-    var fx = PioneerDDJFLX10Fx.currentBeatFx();
-    if (!fx.tail || !PioneerDDJFLX10Fx.available()) {
+    var decks = PioneerDDJFLX10Fx.targetDecks();
+    if (PioneerDDJFLX10Fx.beat.on) {
         PioneerDDJFLX10Fx.setBeatFxOn(false);
-        return;
     }
-    engine.setEffectParameter(PioneerDDJFLX10Fx.slotGroup(PioneerDDJFLX10Fx.UNIT, 1), "send", 0);
-    var ms = PioneerDDJFLX10Fx.RELEASE_BEATS * 60000 / PioneerDDJFLX10Fx.sourceBpm();
-    state.releaseTimer = engine.beginTimer(ms, function() {
-        PioneerDDJFLX10Fx.beat.releaseTimer = 0;
-        PioneerDDJFLX10Fx.setBeatFxOn(false);
-    }, true);
+    decks.forEach(function(deck) {
+        if (engine.getValue("[Channel" + deck + "]", "play")) {
+            engine.brake(deck, true, PioneerDDJFLX10Fx.BRAKE_FACTOR);
+        }
+    });
 };
 
 PioneerDDJFLX10Fx.beatFxChannelSelect = function(channel, control, value) {
@@ -609,9 +646,9 @@ PioneerDDJFLX10Fx.colorRack = function(group) {
 PioneerDDJFLX10Fx.colorTargets = function(deck) {
     var group = "[Channel" + deck + "]";
     var position = PioneerDDJFLX10Fx.color.knob[deck];
-    var selected = PioneerDDJFLX10._selectedStems();
+    var selected = PioneerDDJFLX10Fx.partStems(deck);
     var targets = {};
-    var useStems = selected.length > 0 && selected.length < 4 && PioneerDDJFLX10._hasStems(deck);
+    var useStems = selected !== null;
     targets[PioneerDDJFLX10Fx.colorRack(group)] = useStems ? 0.5 : position;
     if (PioneerDDJFLX10._hasStems(deck)) {
         for (var stem = 1; stem <= 4; stem++) {
@@ -720,6 +757,13 @@ PioneerDDJFLX10Fx.init = function() {
     PioneerDDJFLX10Fx.applyBeatFx();
     PioneerDDJFLX10Fx.setBeatFxLed(false);
     PioneerDDJFLX10Fx.applyColorAll();
+    // A stem track loading or leaving changes where FX PART SELECT sends the FX.
+    for (var d = 1; d <= 4; d++) {
+        engine.makeConnection("[Channel" + d + "]", "stem_count", function() {
+            PioneerDDJFLX10Fx.routeBeatFx();
+            PioneerDDJFLX10Fx.applyColorAll();
+        });
+    }
 };
 
 PioneerDDJFLX10Fx.shutdown = function() {

@@ -158,6 +158,7 @@ PioneerDDJFLX10._OUTPUT_LEDS = [
     {key: "keylock",        note: 0x4A},
     {key: "pfl",            note: 0x54},
     {key: "reverse",        note: 0x15},
+    {key: "slip_enabled",   note: 0x40},
     {key: "sync_enabled",   note: 0x58}
 ];
 PioneerDDJFLX10._refreshOutputLeds = function() {
@@ -178,12 +179,6 @@ PioneerDDJFLX10._refreshOutputLeds = function() {
             for (var k = 0; k < 3; k++) {
                 PioneerDDJFLX10._renderEqKillLed(deck, k);
             }
-        }
-    }
-    // Master EQ kill LEDs (once — these span all decks).
-    if (PioneerDDJFLX10._renderMasterEqKillLed) {
-        for (var mi = 0; mi < 3; mi++) {
-            PioneerDDJFLX10._renderMasterEqKillLed(mi);
         }
     }
 };
@@ -282,7 +277,10 @@ PioneerDDJFLX10.init = function(id) {
     PioneerDDJFLX10._initPartLeds();
 
     // Master EQ kills (master stem buttons → kill a band on all decks)
-    PioneerDDJFLX10._initMasterEqKillLeds();
+    // FX PART SELECT starts with no part selected (effects on whole decks).
+    [0x1B, 0x1C, 0x1D].forEach(function(note) {
+        midi.sendShortMsg(0x96, note, 0x00);
+    });
 
 
     // Re-push LED state once the controller is ready to receive — the FLX10
@@ -448,6 +446,7 @@ PioneerDDJFLX10.wheelTurn = function(channel, control, value, status, group) {
     if (PioneerDDJFLX10._loopAdjustMode[deckNumber]) {
         PioneerDDJFLX10._nudgeLoop(group, deckNumber, newValue);
     } else if (engine.isScratching(deckNumber)) {
+        PioneerDDJFLX10._jogLastTick[deckNumber] = Date.now();
         engine.scratchTick(deckNumber, newValue);
     } else {
         engine.setValue(group, 'jog', PioneerDDJFLX10.sensitivityMinimizer(newValue, JOG_BEND_DIVISOR));
@@ -471,9 +470,29 @@ PioneerDDJFLX10.wheelTouch = function(channel, control, value, status, group) {
         return;
     }
     if (value === 0x7F) {
+        PioneerDDJFLX10._stopJogRelease(deckNumber);
         engine.scratchEnable(deckNumber, SCRATCH_INTERVALS_PER_REV, 33+1/3, 1.0/8, (1.0/8)/32);
-    } else {
-        engine.scratchDisable(deckNumber, false);
+        return;
+    }
+    // A platter let go while spinning keeps driving the track until it slows
+    // down, then playback ramps back to normal, as on a record.
+    PioneerDDJFLX10._stopJogRelease(deckNumber);
+    PioneerDDJFLX10._jogReleaseTimer[deckNumber] = engine.beginTimer(20, function() {
+        if (Date.now() - PioneerDDJFLX10._jogLastTick[deckNumber] > JOG_SPIN_TIMEOUT_MS) {
+            PioneerDDJFLX10._stopJogRelease(deckNumber);
+            engine.scratchDisable(deckNumber, true);
+        }
+    });
+};
+
+var JOG_SPIN_TIMEOUT_MS = 40;
+PioneerDDJFLX10._jogLastTick = {1: 0, 2: 0, 3: 0, 4: 0};
+PioneerDDJFLX10._jogReleaseTimer = {1: 0, 2: 0, 3: 0, 4: 0};
+
+PioneerDDJFLX10._stopJogRelease = function(deckNumber) {
+    if (PioneerDDJFLX10._jogReleaseTimer[deckNumber]) {
+        engine.stopTimer(PioneerDDJFLX10._jogReleaseTimer[deckNumber]);
+        PioneerDDJFLX10._jogReleaseTimer[deckNumber] = 0;
     }
 };
 
@@ -1254,60 +1273,6 @@ PioneerDDJFLX10._initEqKillLeds = function() {
     }
 };
 
-// ─── Master EQ kill (applies to ALL channels) ───────────────────────────────
-// The master section's STEM buttons (notes 0x1B/0x1C/0x1D on status 0x96) have
-// no stem use; map them to LOW/MID/HIGH kills across ALL 4 decks at once (Mixxx
-// has no master EQ kill). Default = lit (bands on). Press kills the band on every
-// deck; press again restores it everywhere. LED stays lit unless killed on all 4.
-PioneerDDJFLX10._MASTER_EQ_STATUS = 0x96;
-PioneerDDJFLX10._MASTER_EQ_KILL = [
-    {note: 0x1B, param: "button_parameter2"},  // 27 = Vocal → Mid
-    {note: 0x1C, param: "button_parameter1"},  // 28 = Drums → Low
-    {note: 0x1D, param: "button_parameter3"}   // 29 = Inst  → High
-];
-PioneerDDJFLX10._masterBandAllKilled = function(param) {
-    for (var d = 1; d <= 4; d++) {
-        if (engine.getValue(PioneerDDJFLX10._eqGroup(d), param) <= 0) {
-            return false;
-        }
-    }
-    return true;
-};
-PioneerDDJFLX10._renderMasterEqKillLed = function(idx) {
-    var allKilled = PioneerDDJFLX10._masterBandAllKilled(
-        PioneerDDJFLX10._MASTER_EQ_KILL[idx].param);
-    midi.sendShortMsg(PioneerDDJFLX10._MASTER_EQ_STATUS,
-                      PioneerDDJFLX10._MASTER_EQ_KILL[idx].note,
-                      allKilled ? 0x00 : 0x7F);   // lit unless killed on all decks
-};
-PioneerDDJFLX10.masterEqKill = function(channel, control, value, status, group) {
-    // Latching button: Note ON (status 0x9n, vel>0) = lit = band ON; Note OFF
-    // (status 0x8n, or vel 0) = unlit = band KILLED. Set the kill to match the
-    // button's reported state (don't toggle) so one press = one change.
-    var lit = ((status & 0xF0) === 0x90) && (value > 0);
-    for (var i = 0; i < PioneerDDJFLX10._MASTER_EQ_KILL.length; i++) {
-        if (PioneerDDJFLX10._MASTER_EQ_KILL[i].note === control) {
-            var p = PioneerDDJFLX10._MASTER_EQ_KILL[i].param;
-            for (var d = 1; d <= 4; d++) {
-                engine.setValue(PioneerDDJFLX10._eqGroup(d), p, lit ? 0 : 1);
-            }
-            return;   // master + per-deck LEDs update via their connections
-        }
-    }
-};
-PioneerDDJFLX10._initMasterEqKillLeds = function() {
-    for (var i = 0; i < PioneerDDJFLX10._MASTER_EQ_KILL.length; i++) {
-        (function(idx){
-            for (var d = 1; d <= 4; d++) {
-                engine.makeConnection(PioneerDDJFLX10._eqGroup(d),
-                    PioneerDDJFLX10._MASTER_EQ_KILL[idx].param, function(){
-                        PioneerDDJFLX10._renderMasterEqKillLed(idx);
-                    });
-            }
-            PioneerDDJFLX10._renderMasterEqKillLed(idx);   // seed current LED state
-        })(i);
-    }
-};
 
 // 4-beat loop button (note 0x14) — anchors the loop at the PRESS point: creates
 // a 4-beat loop ENDING where you press (covering the previous 4 beats), instead
@@ -1582,29 +1547,15 @@ PioneerDDJFLX10._initPartLeds = function() {
 };
 
 // FX PART SELECT (VOCAL / DRUMS / INST, channel 7 notes 0x1B/0x1C/0x1D,
-// latching). With stems loaded, the lit parts are the ones the Sound Color FX
-// knob acts on, through each stem's own Quick Effect. Beat FX cannot follow:
-// Mixxx effect units cannot be routed to a single stem. With no stem track
-// loaded on any deck the buttons keep their master EQ kill function.
+// latching): the lit parts are the stems the Beat FX and the Sound Color FX
+// act on, on decks with a stem track loaded (Mixxx has no real-time stem
+// separation, so on other tracks the effects stay on the whole deck).
 PioneerDDJFLX10._FX_PART_NOTES = {0x1B: 0x0E, 0x1C: 0x0D, 0x1D: 0x0F};
 PioneerDDJFLX10._fxPartSelected = {0x1B: false, 0x1C: false, 0x1D: false};
 
-PioneerDDJFLX10._anyDeckHasStems = function() {
-    for (var d = 1; d <= 4; d++) {
-        if (PioneerDDJFLX10._hasStems(d)) {
-            return true;
-        }
-    }
-    return false;
-};
-
-PioneerDDJFLX10.fxPartSelect = function(channel, control, value, status, group) {
-    var lit = ((status & 0xF0) === 0x90) && (value > 0);
-    if (!PioneerDDJFLX10._anyDeckHasStems()) {
-        PioneerDDJFLX10.masterEqKill(channel, control, value, status, group);
-        return;
-    }
-    PioneerDDJFLX10._fxPartSelected[control] = lit;
+PioneerDDJFLX10.fxPartSelect = function(channel, control, value, status) {
+    PioneerDDJFLX10._fxPartSelected[control] = ((status & 0xF0) === 0x90) && (value > 0);
+    PioneerDDJFLX10Fx.routeBeatFx();
     PioneerDDJFLX10Fx.applyColorAll();
 };
 

@@ -97,9 +97,8 @@ Pioneer's algorithms.
 
 LEVEL/DEPTH is the dry/wet of the effect unit. CH SELECT routes it to a
 deck, the master, all microphones (MIC) or all samplers (SP). The ON
-button flashes while the effect runs. SHIFT + ON is Release FX: delays
-stop taking input and ring out for four beats, other effects stop at
-once. SHIFT + BEAT < / > select AUTO (the effects follow the tempo of
+button flashes while the effect runs. SHIFT + ON is Release FX as a vinyl
+brake: the Beat FX stops and the decks it was set to slow down to a stop. SHIFT + BEAT < / > select AUTO (the effects follow the tempo of
 what they process) and TAP (tap the tempo on BEAT >).
 
 | Sound Color FX | Left of centre | Right of centre |
@@ -121,16 +120,16 @@ only switches, routes and mixes whatever chain is loaded in effect unit 1.
 
 - STEMS: needs stem files (`.stem.mp4`); Mixxx does not separate tracks in
   real time. Without stems the ACTIVE PART buttons are LOW/MID/HIGH EQ
-  kills. FX PART SELECT is still a master EQ kill (Mixxx cannot route an
-  effect unit to one stem).
+  kills and FX PART SELECT has no effect (the FX act on the whole deck).
 - PAD FX uses effect units 3 and 4 and loop rolls; Pioneer's own effect
   algorithms are not available.
 - Memory cues are stored as hot cues 17-36.
 - VIEW held adds the track to Auto DJ (rekordbox: Tag List).
 - Fader Start messages are only sent when Fader Start is enabled in the
   unit's settings (`flx10_setup.py settings --fader-start on`).
-- FX PART SELECT applies the Sound Color FX knob to the selected stem parts
-  (through each stem's Quick Effect). Beat FX always acts on the whole deck.
+- FX PART SELECT applies the Beat FX and the Sound Color FX to the selected
+  stem parts (effect unit 1 routed to those stems, and each stem's Quick
+  Effect).
 - MIX POINT LINK works as in rekordbox (setting "MIX POINT LINK button");
   choose "Key Lock (Serato)" there if you want the button as key lock, the
   FLX10 has no other key lock button. The jog screens do not show the mix

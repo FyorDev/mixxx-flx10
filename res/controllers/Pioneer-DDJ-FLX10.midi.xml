@@ -15288,6 +15288,38 @@
                 <minimum>0.5</minimum>
             </output>
             <!-- Key Sync LED CH4 driven by keySyncToggle (see CH1 note above). -->
+            <output>
+                <group>[Channel1]</group>
+                <key>slip_enabled</key>
+                <description>SLIP LED CH1</description>
+                <status>0x90</status>
+                <midino>0x40</midino>
+                <minimum>0.5</minimum>
+            </output>
+            <output>
+                <group>[Channel2]</group>
+                <key>slip_enabled</key>
+                <description>SLIP LED CH2</description>
+                <status>0x91</status>
+                <midino>0x40</midino>
+                <minimum>0.5</minimum>
+            </output>
+            <output>
+                <group>[Channel3]</group>
+                <key>slip_enabled</key>
+                <description>SLIP LED CH3</description>
+                <status>0x92</status>
+                <midino>0x40</midino>
+                <minimum>0.5</minimum>
+            </output>
+            <output>
+                <group>[Channel4]</group>
+                <key>slip_enabled</key>
+                <description>SLIP LED CH4</description>
+                <status>0x93</status>
+                <midino>0x40</midino>
+                <minimum>0.5</minimum>
+            </output>
         </outputs>
     </controller>
 </MixxxControllerPreset>
