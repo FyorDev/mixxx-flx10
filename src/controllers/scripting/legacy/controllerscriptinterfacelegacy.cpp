@@ -264,7 +264,8 @@ QJSValue ControllerScriptInterfaceLegacy::getBeatInfo(const QString& group) {
 
 bool ControllerScriptInterfaceLegacy::loadEffect(const QString& group,
         const QString& effectId,
-        const QJSValue& parameters) {
+        const QJSValue& parameters,
+        bool reload) {
     QList<std::pair<QString, double>> values;
     if (parameters.isObject()) {
         QJSValueIterator it(parameters);
@@ -280,7 +281,7 @@ bool ControllerScriptInterfaceLegacy::loadEffect(const QString& group,
             values.append({it.name(), value});
         }
     }
-    if (!EffectSlot::requestLoadEffect(group, effectId, values)) {
+    if (!EffectSlot::requestLoadEffect(group, effectId, values, reload)) {
         qCWarning(m_logger) << "loadEffect: no effect slot" << group
                             << "or no effect" << effectId;
         return false;

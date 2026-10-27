@@ -132,7 +132,8 @@ class EffectSlot : public QObject {
     /// Return false if there is no such slot or effect.
     static bool requestLoadEffect(const QString& group,
             const QString& effectId,
-            const QList<std::pair<QString, double>>& parameterValues);
+            const QList<std::pair<QString, double>>& parameterValues,
+            bool reload = false);
     static bool requestSetParameter(const QString& group,
             const QString& parameterId,
             double value);

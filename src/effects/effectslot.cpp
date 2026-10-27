@@ -624,7 +624,8 @@ void EffectSlot::slotPresetListVisibleChanged(bool visible) {
 // static
 bool EffectSlot::requestLoadEffect(const QString& group,
         const QString& effectId,
-        const QList<std::pair<QString, double>>& parameterValues) {
+        const QList<std::pair<QString, double>>& parameterValues,
+        bool reload) {
     // Held until the request is queued: the destructor takes it too.
     const auto locker = lockMutex(&s_slotRegistryMutex);
     EffectSlot* pSlot = s_slotRegistry.value(group).data();
@@ -643,8 +644,8 @@ bool EffectSlot::requestLoadEffect(const QString& group,
     }
     QMetaObject::invokeMethod(
             pSlot,
-            [pSlot, pManifest, parameterValues]() {
-                if (pSlot->getManifest() != pManifest) {
+            [pSlot, pManifest, parameterValues, reload]() {
+                if (reload || pSlot->getManifest() != pManifest) {
                     pSlot->loadEffectWithDefaults(pManifest);
                 }
                 pSlot->unlinkKnobParameters();

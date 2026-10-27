@@ -52,6 +52,15 @@ TEST_F(EffectSlotScriptApiTest, KeepsTheEffectWhenLoadedAgain) {
     EXPECT_DOUBLE_EQ(0.2, get(QStringLiteral("parameter2")));
 }
 
+TEST_F(EffectSlotScriptApiTest, ReloadStartsTheEffectAfresh) {
+    const QString id = QStringLiteral("org.mixxx.effects.beatdelay");
+    ASSERT_TRUE(EffectSlot::requestLoadEffect(kSlot, id, {{QStringLiteral("time"), 2.0}}));
+    QCoreApplication::processEvents();
+    ASSERT_TRUE(EffectSlot::requestLoadEffect(kSlot, id, {}, true));
+    QCoreApplication::processEvents();
+    EXPECT_DOUBLE_EQ(0.5, get(QStringLiteral("parameter1")));
+}
+
 TEST_F(EffectSlotScriptApiTest, RejectsUnknownSlotOrEffect) {
     EXPECT_FALSE(EffectSlot::requestLoadEffect(QStringLiteral("[EffectRack1_EffectUnit9_Effect9]"),
             QStringLiteral("org.mixxx.effects.echo"),

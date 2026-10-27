@@ -77,13 +77,15 @@ class ControllerScriptInterfaceLegacy : public QObject {
     Q_INVOKABLE QJSValue getCoverArt(const QString& group, int size = 0);
     // Loads the effect with the given id (e.g. "org.mixxx.effects.echo") into
     // an effect slot such as "[EffectRack1_EffectUnit1_Effect1]", keeps it if
-    // it is already loaded, unlinks its knobs from the chain's super knob and
-    // sets the given parameters {parameterId: value} in their own units.
+    // it is already loaded (unless reload is true, which starts it afresh,
+    // e.g. without the old echoes), unlinks its knobs from the chain's super
+    // knob and sets the given parameters {parameterId: value} in their units.
     // Works asynchronously; later setEffectParameter() calls apply after it.
     // Returns false for an unknown slot or effect id.
     Q_INVOKABLE bool loadEffect(const QString& group,
             const QString& effectId,
-            const QJSValue& parameters = QJSValue());
+            const QJSValue& parameters = QJSValue(),
+            bool reload = false);
     // Sets a parameter of the effect in a slot by its id, in its own units.
     Q_INVOKABLE bool setEffectParameter(const QString& group,
             const QString& parameterId,
